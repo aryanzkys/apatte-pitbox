@@ -1,0 +1,325 @@
+<!--
+===========================================================================
+  LOGIN.HTML - Halaman Autentikasi & Pemilihan Role
+  Apatte Racing Team | Shell Eco-Marathon 2026
+
+  FITUR UTAMA:
+  1. Form login dengan username, password, dan role selection
+  2. Role-based redirect: admin/manager → overview, ph-h2 → ph-h2, uc-be → uc-be
+  3. SessionStorage untuk menyimpan role user
+  4. Glassmorphic UI design dengan circuit background
+
+  ROLE YANG TERSEDIA:
+  - admin    : Akses penuh ke semua halaman termasuk settings
+  - manager  : Akses overview, ph-h2, uc-be (tanpa settings)
+  - ph-h2    : Hanya akses halaman PH-H2 telemetry
+  - uc-be    : Hanya akses halaman UC-BE telemetry
+===========================================================================
+-->
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Apatte Pitbox Login | Telemetry Terminal</title>
+
+    <!-- =============================================
+         DEPENDENCIES - CDN Libraries
+         - Tailwind CSS: Framework CSS utility-first
+         - Space Grotesk: Font utama dashboard
+         - Material Symbols: Icon library dari Google
+    ============================================= -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+    <!-- =============================================
+         TAILWIND CONFIG - Konfigurasi Warna & Font
+         Warna ini HARUS konsisten di semua 5 file HTML.
+         Jika mengubah warna, ubah juga di:
+         overview.html, ph-h2.html, uc-be.html, setting.html
+    ============================================= -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1e3b8a",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#0a0c12",
+                        "surface-dark": "#131620",
+                        "border-dark": "#282f43",
+                        "accent-hydrogen": "#3b82f6",
+                        "accent-electric": "#10b981",
+                        "critical": "#ef4444",
+                        "warning": "#f59e0b"
+                    },
+                    fontFamily: { "display": ["Space Grotesk", "sans-serif"] }
+                },
+            },
+        }
+    </script>
+    <!-- =============================================
+         CUSTOM CSS
+         - Body gradient background
+         - Circuit-bg: efek dekoratif radial gradient
+         - Glass-card: efek glassmorphism untuk login card
+         - Scrollbar: custom scrollbar (Chrome & Firefox)
+         - Scanline: animasi efek retro CRT
+    ============================================= -->
+    <style>
+        /* Background utama halaman login */
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: linear-gradient(135deg, #0a0c12 0%, #131620 100%);
+            overflow-x: hidden;
+        }
+        .circuit-bg {
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
+        }
+        .glass-card {
+            background: rgba(19, 22, 32, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid #282f43;
+        }
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(40, 47, 67, 0.3);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e3b8a;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #162d6e;
+        }
+        /* Firefox */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #1e3b8a rgba(40, 47, 67, 0.3);
+        }
+        .scanline {
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            animation: scan 8s linear infinite;
+        }
+        @keyframes scan {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(10px); }
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark h-screen flex flex-col overflow-auto relative circuit-bg font-display">
+    <!-- =============================================
+         FITUR: Background Dekoratif SVG
+         Elemen visual circuit pattern (non-interaktif)
+    ============================================= -->
+    <div class="absolute inset-0 opacity-10 pointer-events-none overflow-hidden">
+        <svg class="w-full h-full" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+            <path d="M100,500 L300,500 L400,300 L600,300 L700,500 L900,500 L850,700 L150,700 Z" fill="none" stroke="#3b82f6" stroke-width="2"></path>
+            <circle cx="500" cy="500" r="400" fill="none" stroke="#3b82f6" stroke-width="0.5"></circle>
+        </svg>
+    </div>
+
+    <!-- =============================================
+         FITUR: Top Navbar - Header Navigasi Login
+         Berisi: Logo Apatte Racing Team, status autentikasi, versi app
+    ============================================= -->
+    <header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-white/5 bg-background-dark/80 backdrop-blur-md px-10 py-3 z-20">
+        <div class="flex items-center gap-4 text-white">
+            <div class="size-6 text-primary">
+                <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M36.7273 44C33.9891 44 31.6043 39.8386 30.3636 33.69C29.123 39.8386 26.7382 44 24 44C21.2618 44 18.877 39.8386 17.6364 33.69C16.3957 39.8386 14.0109 44 11.2727 44C7.25611 44 4 35.0457 4 24C4 12.9543 7.25611 4 11.2727 4C14.0109 4 16.3957 8.16144 17.6364 14.31C18.877 8.16144 21.2618 4 24 4C26.7382 4 29.123 8.16144 30.3636 14.31C31.6043 8.16144 33.9891 4 36.7273 4C40.7439 4 44 12.9543 44 24C44 35.0457 40.7439 44 36.7273 44Z" fill="currentColor"></path>
+                </svg>
+            </div>
+            <h2 class="text-white text-lg font-bold leading-tight tracking-widest uppercase">Apatte Racing Team</h2>
+        </div>
+        <div class="flex flex-1 justify-end gap-8">
+            <div class="flex items-center gap-6">
+                <span class="text-white/40 text-[10px] font-mono tracking-tighter uppercase">Status: Authentication Required</span>
+                <span class="text-white/40 text-[10px] font-mono tracking-tighter uppercase">Ver: 2026.4.1</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- =============================================
+         FITUR: Main Content - Form Login
+         Berisi: Headline, login card, form fields, tombol submit
+    ============================================= -->
+    <main class="flex-1 flex flex-col items-center justify-center relative px-4">
+        <div class="w-full max-w-[480px] z-20">
+
+            <!-- FITUR: Headline - Judul halaman login -->
+            <div class="mb-8">
+                <h1 class="text-white tracking-widest text-3xl font-bold leading-tight text-center mb-2 uppercase">
+                    Initialize Session
+                </h1>
+                <p class="text-white/40 text-xs font-mono font-normal leading-normal text-center tracking-widest">
+                    Enter your credentials to access the Apatte Pitbox Command Center
+                </p>
+            </div>
+
+            <!-- =============================================
+                 FITUR: Login Card (Glassmorphism)
+                 Berisi:
+                 - ASCII Art Logo PITBOX
+                 - Input: Username (Engineer Identifier)
+                 - Input: Password (Security Token)
+                 - Select: Role (admin/manager/ph-h2/uc-be)
+                 - Button: Initialize Session → handleLogin()
+                 - Status: Encrypted link indicator
+            ============================================= -->
+            <div class="glass-card rounded-xl overflow-hidden relative">
+
+                <!-- FITUR: ASCII Logo Header - Dekoratif PITBOX text art -->
+                <div class="bg-black/40 p-6 border-b border-white/5">
+                    <pre class="text-accent-electric font-mono text-[8px] leading-[8px] text-center opacity-80">██████╗ ██╗████████╗██████╗  ██████╗ ██╗  ██╗
+██╔══██╗██║╚══██╔══╝██╔══██╗██╔═══██╗╚██╗██╔╝
+██████╔╝██║   ██║   ██████╔╝██║   ██║ ╚███╔╝ 
+██╔═══╝ ██║   ██║   ██╔══██╗██║   ██║ ██╔██╗ 
+██║     ██║   ██║   ██████╔╝╚██████╔╝██╔╝ ██╗
+╚═╝     ╚═╝   ╚═╝   ╚═════╝  ╚═════╝ ╚═╝  ╚═╝</pre>
+                </div>
+
+                <div class="p-8 space-y-6">
+                    <div class="space-y-4">
+                        <!-- FITUR: Input Username / Engineer Identifier -->
+                        <div class="flex flex-col gap-2">
+                            <label class="text-white/60 text-[10px] font-bold tracking-widest uppercase ml-1">Engineer Identifier</label>
+                            <div class="relative group">
+                                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-accent-electric transition-colors">person</span>
+                                <input class="w-full pl-12 pr-4 py-4 bg-black/40 border border-white/10 rounded-lg text-white focus:outline-none focus:border-accent-electric focus:ring-1 focus:ring-accent-electric/50 transition-all font-mono placeholder:text-white/10" placeholder="ENGINEER_ID" type="text" id="username"/>
+                            </div>
+                        </div>
+
+                        <!-- FITUR: Input Password / Security Token -->
+                        <div class="flex flex-col gap-2">
+                            <label class="text-white/60 text-[10px] font-bold tracking-widest uppercase ml-1">Security Token</label>
+                            <div class="relative group">
+                                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-accent-electric transition-colors">lock</span>
+                                <input class="w-full pl-12 pr-4 py-4 bg-black/40 border border-white/10 rounded-lg text-white focus:outline-none focus:border-accent-electric focus:ring-1 focus:ring-accent-electric/50 transition-all font-mono placeholder:text-white/10" placeholder="••••••••••••" type="password" id="password"/>
+                            </div>
+                        </div>
+
+                        <!-- FITUR: Select Role / Station Role
+                             Menentukan halaman tujuan setelah login:
+                             - admin   → overview.html
+                             - manager → overview.html
+                             - ph-h2   → ph-h2.html
+                             - uc-be   → uc-be.html -->
+                        <div class="flex flex-col gap-2">
+                            <label class="text-white/60 text-[10px] font-bold tracking-widest uppercase ml-1">Station Role</label>
+                            <select id="role" class="w-full pl-4 pr-4 py-4 bg-black/40 border border-white/10 rounded-lg text-white focus:outline-none focus:border-accent-electric focus:ring-1 focus:ring-accent-electric/50 transition-all font-mono">
+                                <option value="admin">Admin</option>
+                                <option value="manager">Manager</option>
+                                <option value="ph-h2">PH-H2 Team</option>
+                                <option value="uc-be">UC-BE Team</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-4">
+                        <button type="button" onclick="handleLogin()" class="w-full py-4 bg-primary hover:bg-blue-700 text-white font-bold tracking-[0.2em] rounded-lg transition-all flex items-center justify-center gap-3 group">
+                            <span class="truncate">INITIALIZE SESSION</span>
+                            <span class="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">bolt</span>
+                        </button>
+                        <div class="flex items-center justify-between px-1">
+                            <div class="flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full bg-accent-electric animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
+                                <span class="text-[10px] text-white/40 font-mono">ENCRYPTED LINK ACTIVE</span>
+                            </div>
+                            <a class="text-[10px] text-white/40 hover:text-primary transition-colors font-mono" href="#">FORGOT KEY?</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FITUR: Gradient line dekoratif di bawah card -->
+                <div class="h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50"></div>
+            </div>
+
+            <p class="text-white/20 text-[9px] text-center mt-6 tracking-[0.3em] font-mono">
+                APATTE TELEMETRY SYSTEM | SHELL ECO-MARATHON 2026 | CLASSIFIED
+            </p>
+        </div>
+    </main>
+
+    <!-- =============================================
+         FITUR: System Footer Bar - Status Sistem
+         Menampilkan: MQTT status, paket telemetri, latency, uptime
+    ============================================= -->
+    <footer class="bg-black/60 backdrop-blur-md border-t border-white/5 py-2 px-6 flex items-center justify-between z-20">
+        <div class="flex items-center gap-8">
+            <!-- FITUR: Status Koneksi MQTT -->
+            <div class="flex items-center gap-2">
+                <span class="text-[10px] text-white/40 font-mono tracking-tighter">MQTT:</span>
+                <div class="flex items-center gap-1.5">
+                    <div class="w-1.5 h-1.5 rounded-full bg-accent-electric"></div>
+                    <span class="text-[10px] text-white/80 font-mono uppercase">CONNECTED</span>
+                </div>
+            </div>
+
+            <!-- FITUR: Counter Jumlah Paket Telemetri -->
+            <div class="flex items-center gap-2">
+                <span class="text-[10px] text-white/40 font-mono tracking-tighter">TELEMETRY PACKETS:</span>
+                <span class="text-[10px] text-white/80 font-mono">1,402,883</span>
+            </div>
+
+            <!-- FITUR: Latency Koneksi -->
+            <div class="flex items-center gap-2">
+                <span class="text-[10px] text-white/40 font-mono tracking-tighter">LATENCY:</span>
+                <span class="text-[10px] text-accent-electric font-mono">14ms</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-6">
+            <!-- FITUR: Uptime Sistem -->
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-white/40 text-[14px]">schedule</span>
+                <span class="text-[10px] text-white/60 font-mono tracking-tighter uppercase">Uptime: 142:05:22</span>
+            </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- =============================================
+         FITUR: JavaScript - Login Handler & Role Redirect
+
+         handleLogin():
+         - Mengambil role dari dropdown #role
+         - Menyimpan role ke sessionStorage ('userRole')
+         - Redirect ke halaman sesuai role + query param ?role=
+
+         Mapping redirect:
+         - admin   → overview.html?role=admin
+         - manager → overview.html?role=manager
+         - ph-h2   → ph-h2.html?role=ph-h2
+         - uc-be   → uc-be.html?role=uc-be
+    ============================================= -->
+    <script>
+        function handleLogin() {
+            const role = document.getElementById('role').value;
+            const pageMap = {
+                'admin': 'overview.html',
+                'manager': 'overview.html',
+                'ph-h2': 'ph-h2.html',
+                'uc-be': 'uc-be.html'
+            };
+            
+            sessionStorage.setItem('userRole', role);
+            window.location.href = pageMap[role] + '?role=' + role;
+        }
+    </script>
+</body>
+</html>

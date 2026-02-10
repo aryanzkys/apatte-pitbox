@@ -1,0 +1,329 @@
+<!--
+===========================================================================
+  PH-H2.HTML - Dashboard Telemetri Kendaraan Hydrogen (PH-H2)
+  Apatte Racing Team | Shell Eco-Marathon 2026
+
+  FITUR UTAMA:
+  1. Header: logo H2, judul, topNav (role-based), status kendaraan
+  2. Sidebar navigasi: Pitbox Console + link halaman (role-based)
+  3. Telemetri real-time: Speed, Fuel Efficiency, H2 Tank, Fuel Cell Temp
+  4. Sector Performance chart (S1-S5)
+  5. System Status panel (Engine, Data Logging, MQTT)
+
+  AKSES ROLE:
+  - admin   : Akses penuh + link Settings di sidebar
+  - manager : Akses tanpa Settings
+  - ph-h2   : Hanya halaman ini (sidebar minimal)
+  - uc-be   : Auto-redirect ke uc-be.html
+
+  WARNA AKSEN: #3b82f6 (biru hydrogen) - scrollbar & UI elements
+===========================================================================
+-->
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>PH-H2 Telemetry Dashboard | Apatte Racing Team</title>
+    <!-- =============================================
+         DEPENDENCIES - CDN Libraries
+    ============================================= -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <!-- =============================================
+         TAILWIND CONFIG - Konfigurasi Warna & Font
+         HARUS konsisten di semua 5 file HTML
+    ============================================= -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1e3b8a",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#0a0c12",
+                        "surface-dark": "#131620",
+                        "border-dark": "#282f43",
+                        "accent-hydrogen": "#3b82f6",
+                        "accent-electric": "#10b981",
+                        "critical": "#ef4444",
+                        "warning": "#f59e0b"
+                    },
+                    fontFamily: { "display": ["Space Grotesk", "sans-serif"] }
+                },
+            },
+        }
+    </script>
+    <!-- =============================================
+         CUSTOM CSS
+         - Scrollbar: warna #3b82f6 (biru hydrogen)
+         - glass-panel: efek glassmorphism untuk card
+    ============================================= -->
+    <style>
+        body { font-family: 'Space Grotesk', sans-serif; }
+        /* Scrollbar untuk semua elemen */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(40, 47, 67, 0.3);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3b82f6;
+            border-radius: 5px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #2563eb;
+        }
+        /* Firefox */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #3b82f6 rgba(40, 47, 67, 0.3);
+        }
+        .glass-panel { background: rgba(19, 22, 32, 0.8); backdrop-filter: blur(12px); border: 1px solid #282f43; }
+    </style>
+</head>
+<body class="bg-background-dark text-white h-screen flex flex-col overflow-hidden">
+    <!-- =============================================
+         FITUR: Header - Navigasi Atas PH-H2
+         Berisi:
+         - Logo SVG H2 (warna accent-hydrogen biru)
+         - Judul "PH-H2 Hydrogen Telemetry"
+         - topNav: link navigasi (di-generate JS sesuai role)
+         - Status badge "VEHICLE: ACTIVE"
+         - Tombol notifikasi
+         - Avatar H2
+    ============================================= -->
+    <!-- HEADER -->
+    <header class="flex items-center justify-between border-b border-border-dark bg-surface-dark px-6 py-3 shrink-0">
+        <div class="flex items-center gap-4">
+            <div class="size-6 text-accent-hydrogen">
+                <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M36.7273 44C33.9891 44 31.6043 39.8386 30.3636 33.69C29.123 39.8386 26.7382 44 24 44C21.2618 44 18.877 39.8386 17.6364 33.69C16.3957 39.8386 14.0109 44 11.2727 44C7.25611 44 4 35.0457 4 24C4 12.9543 7.25611 4 11.2727 4C14.0109 4 16.3957 8.16144 17.6364 14.31C18.877 8.16144 21.2618 4 24 4C26.7382 4 29.123 8.16144 30.3636 14.31C31.6043 8.16144 33.9891 4 36.7273 4C40.7439 4 44 12.9543 44 24C44 35.0457 40.7439 44 36.7273 44Z" fill="currentColor"></path>
+                </svg>
+            </div>
+            <h2 class="text-xl font-bold uppercase">PH-H2 Hydrogen Telemetry</h2>
+            <nav id="topNav" class="flex gap-6 ml-12 border-l border-border-dark pl-6"></nav>
+        </div>
+        <div class="flex items-center gap-6">
+            <div class="flex gap-3">
+                <div class="flex items-center px-3 py-1 bg-accent-hydrogen/20 rounded border border-accent-hydrogen/40">
+                    <span class="size-2 rounded-full bg-green-500 animate-pulse mr-2"></span>
+                    <span class="text-xs font-bold text-accent-hydrogen">VEHICLE: ACTIVE</span>
+                </div>
+                <button class="flex items-center justify-center rounded-lg h-9 w-9 bg-border-dark hover:bg-accent-hydrogen transition-colors">
+                    <span class="material-symbols-outlined">notifications</span>
+                </button>
+                <div class="size-8 rounded-full bg-accent-hydrogen flex items-center justify-center font-bold text-xs text-background-dark">H2</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- =============================================
+         FITUR: Main Layout - Sidebar + Content Area
+    ============================================= -->
+    <div class="flex-1 overflow-hidden flex">
+
+        <!-- =============================================
+             FITUR: Sidebar Navigasi (Kiri)
+             Berisi:
+             - Branding "Pitbox Console" + label "PH-H2 Vehicle"
+             - Link navigasi dinamis (di-generate JS sesuai role)
+             - Admin: Overview, PH-H2, UC-BE, Settings
+             - Manager: Overview, PH-H2, UC-BE
+             - ph-h2: Hanya PH-H2 Telemetry
+        ============================================= -->
+        <!-- NAVBAR -->
+        <nav class="w-64 border-r border-border-dark bg-surface-dark flex flex-col shrink-0">
+            <div class="p-6 border-b border-border-dark">
+                <h1 class="text-lg font-bold tracking-tight">Pitbox Console</h1>
+                <p class="text-xs text-[#9db9b0] uppercase tracking-widest mt-1">PH-H2 Vehicle</p>
+            </div>
+            <nav class="flex-1 p-4 flex flex-col gap-2 overflow-y-auto" id="navContent"></nav>
+        </nav>
+
+        <!-- =============================================
+             FITUR: Content Area - Telemetri PH-H2
+             Berisi:
+             - Judul "Live Vehicle Telemetry"
+             - 4 kartu telemetri (grid 4 kolom):
+               1. Current Speed (42.5 km/h)
+               2. Fuel Efficiency (185 km/m³)
+               3. H2 Tank Level (45%)
+               4. Fuel Cell Temp (68°C)
+             - 2 panel bawah (grid 2 kolom):
+               1. Sector Performance (S1-S5 bar chart)
+               2. System Status (Engine, Data Logging, MQTT)
+        ============================================= -->
+        <!-- CONTENT -->
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <div class="flex-1 overflow-y-auto p-8">
+                <!-- Current Speed Gauge -->
+                <div class="mb-8">
+                    <h2 class="text-3xl font-bold mb-6">Live Vehicle Telemetry</h2>
+                    <div class="grid grid-cols-4 gap-4">
+                        <!-- FITUR: Kartu Speed - Kecepatan saat ini -->
+                        <div class="glass-panel rounded-xl p-6">
+                            <p class="text-xs text-[#9db9b0] font-bold uppercase mb-2">Current Speed</p>
+                            <p class="text-4xl font-bold text-accent-hydrogen">42.5 <span class="text-xl text-[#9db9b0]">km/h</span></p>
+                            <div class="mt-2 h-1 bg-border-dark rounded-full overflow-hidden">
+                                <div class="h-full bg-accent-hydrogen w-[65%]"></div>
+                            </div>
+                        </div>
+
+                        <!-- FITUR: Kartu Efficiency - Efisiensi bahan bakar -->
+                        <div class="glass-panel rounded-xl p-6">
+                            <p class="text-xs text-[#9db9b0] font-bold uppercase mb-2">Fuel Efficiency</p>
+                            <p class="text-4xl font-bold text-accent-hydrogen">185 <span class="text-xl text-[#9db9b0]">km/m³</span></p>
+                            <div class="mt-2 h-1 bg-border-dark rounded-full overflow-hidden">
+                                <div class="h-full bg-accent-hydrogen w-[85%]"></div>
+                            </div>
+                        </div>
+
+                        <!-- FITUR: Kartu H2 Tank - Level tangki hydrogen -->
+                        <div class="glass-panel rounded-xl p-6">
+                            <p class="text-xs text-[#9db9b0] font-bold uppercase mb-2">H2 Tank Level</p>
+                            <p class="text-4xl font-bold text-accent-hydrogen">45 <span class="text-xl text-[#9db9b0]">%</span></p>
+                            <div class="mt-2 h-1 bg-border-dark rounded-full overflow-hidden">
+                                <div class="h-full bg-accent-hydrogen w-[45%]"></div>
+                            </div>
+                        </div>
+
+                        <!-- FITUR: Kartu Temperature - Suhu fuel cell -->
+                        <div class="glass-panel rounded-xl p-6">
+                            <p class="text-xs text-[#9db9b0] font-bold uppercase mb-2">Fuel Cell Temp</p>
+                            <p class="text-4xl font-bold text-accent-hydrogen">68 <span class="text-xl text-[#9db9b0]">°C</span></p>
+                            <div class="mt-2 h-1.5 bg-border-dark rounded-full overflow-hidden">
+                                <div class="h-full bg-accent-hydrogen w-[68%]"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Metrics -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="glass-panel rounded-xl p-6">
+                        <p class="text-sm font-bold uppercase mb-4 text-[#9db9b0]">Sector Performance</p>
+                        <div class="flex items-end h-32 gap-2">
+                            <div class="flex-1 bg-accent-hydrogen/40 rounded-t h-[40%]"></div>
+                            <div class="flex-1 bg-accent-hydrogen/60 rounded-t h-[65%]"></div>
+                            <div class="flex-1 bg-accent-hydrogen rounded-t h-[90%]"></div>
+                            <div class="flex-1 bg-accent-hydrogen/50 rounded-t h-[30%]"></div>
+                            <div class="flex-1 bg-accent-hydrogen/80 rounded-t h-[75%]"></div>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-[#9db9b0] mt-2 font-bold">
+                            <span>S1</span><span>S2</span><span>S3</span><span>S4</span><span>S5</span>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel rounded-xl p-6">
+                        <p class="text-sm font-bold uppercase mb-4 text-[#9db9b0]">System Status</p>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-[#9db9b0]">Engine Status</span>
+                                <span class="px-2 py-1 bg-green-500/20 text-green-500 text-xs rounded font-bold">RUNNING</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-[#9db9b0]">Data Logging</span>
+                                <span class="px-2 py-1 bg-primary/20 text-primary text-xs rounded font-bold">ACTIVE</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-[#9db9b0]">MQTT Connection</span>
+                                <span class="px-2 py-1 bg-accent-electric/20 text-accent-electric text-xs rounded font-bold">CONNECTED</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- =============================================
+         FITUR: JavaScript - Role Protection & Navigation Builder
+
+         1. Role Protection:
+            - Ambil role dari URL ?role= atau sessionStorage
+            - Jika role 'uc-be', redirect ke uc-be.html
+            - Simpan role ke sessionStorage
+
+         2. Top Navbar Builder:
+            - admin: Overview, PH-H2, UC-BE, Settings
+            - manager: Overview, PH-H2, UC-BE
+            - ph-h2/uc-be: kosong (tidak ada link)
+
+         3. Sidebar Navbar Builder:
+            - ph-h2 role: hanya link PH-H2 Telemetry
+            - Lainnya: Overview, PH-H2, UC-BE + Settings (admin)
+            - Halaman aktif ditandai dengan highlight biru
+    ============================================= -->
+    <script>
+        // Get role and protect against unauthorized access
+        const urlParams = new URLSearchParams(window.location.search);
+        const role = urlParams.get('role') || sessionStorage.getItem('userRole') || 'admin';
+        
+        if (role === 'uc-be') {
+            window.location.href = `uc-be.html?role=${role}`;
+        }
+        
+        sessionStorage.setItem('userRole', role);
+
+        // Build top navbar
+        const topNav = document.getElementById('topNav');
+        if (topNav) {
+            const navItems = {
+                admin: ['Overview', 'PH-H2', 'UC-BE', 'Settings'],
+                manager: ['Overview', 'PH-H2', 'UC-BE'],
+                'ph-h2': [],
+                'uc-be': []
+            };
+
+            const navLinks = {
+                'Overview': 'overview.html',
+                'PH-H2': 'ph-h2.html',
+                'UC-BE': 'uc-be.html',
+                'Settings': 'setting.html'
+            };
+
+            (navItems[role] || navItems.admin).forEach(item => {
+                const link = document.createElement('a');
+                link.href = navLinks[item] + '?role=' + role;
+                const isActive = navLinks[item] === 'ph-h2.html';
+                link.className = isActive
+                    ? 'text-sm font-bold text-accent-hydrogen'
+                    : 'text-sm font-medium text-white/60 hover:text-white transition-colors';
+                link.textContent = item;
+                topNav.appendChild(link);
+            });
+        }
+
+        // Build sidebar navbar
+        const navItems = role === 'ph-h2' ? 
+            [{ label: 'PH-H2 Telemetry', href: 'ph-h2.html', icon: 'electric_car' }] :
+            [
+                { label: 'Overview', href: 'overview.html', icon: 'dashboard' },
+                { label: 'PH-H2 Telemetry', href: 'ph-h2.html', icon: 'electric_car' },
+                { label: 'UC-BE Telemetry', href: 'uc-be.html', icon: 'electric_car' }
+            ];
+
+        if (role === 'admin') {
+            navItems.push({ label: 'Settings', href: 'setting.html', icon: 'settings' });
+        }
+
+        const navContent = document.getElementById('navContent');
+        navItems.forEach(item => {
+            const link = document.createElement('a');
+            link.href = `${item.href}?role=${role}`;
+            const isActive = item.href === 'ph-h2.html';
+            link.className = isActive
+                ? 'flex items-center gap-3 px-3 py-2 rounded-lg bg-accent-hydrogen/10 text-accent-hydrogen border border-accent-hydrogen/20'
+                : 'flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors text-[#9db9b0] hover:text-white';
+            link.innerHTML = `<span class="material-symbols-outlined">${item.icon}</span><span class="text-sm font-medium">${item.label}</span>`;
+            navContent.appendChild(link);
+        });
+    </script>
+</body>
+</html>

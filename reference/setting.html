@@ -1,0 +1,433 @@
+<!--
+===========================================================================
+  SETTING.HTML - Admin Settings & Threshold Configuration Hub
+  Apatte Racing Team | Shell Eco-Marathon 2026
+
+  FITUR UTAMA:
+  1. Top navbar: judul Settings Admin, topNav, "Back to Overview"
+  2. Sidebar navigasi: 6 menu admin + System Status card
+  3. Sub-header: search bar, link overview/strategy, Live Feed button
+  4. Thresholds accordion: parameter monitoring (LEL, Voltage, Temp)
+  5. User Access accordion: manajemen role (Admin, Manager)
+  6. Network Settings accordion: MQTT broker & update interval
+  7. Export Config & Commit Changes buttons
+
+  AKSES ROLE:
+  - admin : Satu-satunya role yang bisa akses halaman ini
+  - Semua role lain → auto-redirect ke overview.html
+===========================================================================
+-->
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Settings & Threshold Admin Hub | Apatte Racing Team</title>
+    <!-- =============================================
+         DEPENDENCIES - CDN Libraries
+    ============================================= -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <!-- =============================================
+         TAILWIND CONFIG - Konfigurasi Warna & Font
+         HARUS konsisten di semua 5 file HTML
+    ============================================= -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1e3b8a",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#0a0c12",
+                        "surface-dark": "#131620",
+                        "border-dark": "#282f43",
+                        "accent-hydrogen": "#3b82f6",
+                        "accent-electric": "#10b981",
+                        "critical": "#ef4444",
+                        "warning": "#f59e0b"
+                    },
+                    fontFamily: { "display": ["Space Grotesk", "sans-serif"] }
+                },
+            },
+        }
+    </script>
+    <!-- =============================================
+         CUSTOM CSS
+         - Scrollbar: warna #1e3b8a (primary navy)
+         - Hanya scrollbar, tanpa glass-panel (pakai kelas Tailwind)
+    ============================================= -->
+    <style>
+        body { font-family: 'Space Grotesk', sans-serif; }
+        /* Scrollbar untuk semua elemen */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(40, 47, 67, 0.3);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e3b8a;
+            border-radius: 5px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #162d6e;
+        }
+        /* Firefox */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #1e3b8a rgba(40, 47, 67, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-background-dark text-white h-screen flex overflow-hidden">
+    <!-- =============================================
+         FITUR: Top Navigation Bar (Fixed/Absolute z-50)
+         Berisi:
+         - Logo SVG Apatte
+         - Judul "Settings Admin"
+         - topNav: link navigasi (di-generate JS)
+         - Tombol "Back to Overview" → goToOverview()
+         - Avatar "AD" (Admin)
+    ============================================= -->
+    <!-- TOP NAVIGATION BAR -->
+    <header class="absolute top-0 left-0 right-0 flex items-center justify-between border-b border-border-dark bg-surface-dark px-6 py-3 z-50">
+        <div class="flex items-center gap-4">
+            <div class="size-6 text-primary">
+                <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M13.8261 30.5736C16.7203 29.8826 20.2244 29.4783 24 29.4783C27.7756 29.4783 31.2797 29.8826 34.1739 30.5736C36.9144 31.2278 39.9967 32.7669 41.3563 33.8352L24.8486 7.36089C24.4571 6.73303 23.5429 6.73303 23.1514 7.36089L6.64374 33.8352C8.00331 32.7669 11.0856 31.2278 13.8261 30.5736Z" fill="currentColor"></path>
+                </svg>
+            </div>
+            <h2 class="text-xl font-bold tracking-tight uppercase">Settings Admin</h2>
+            <nav id="topNav" class="flex gap-6 ml-12 border-l border-border-dark pl-6"></nav>
+        </div>
+        <div class="flex items-center gap-6">
+            <div class="flex gap-3">
+                <button onclick="goToOverview()" class="px-4 py-2 bg-border-dark hover:bg-primary text-xs font-bold uppercase rounded transition-colors">
+                    Back to Overview
+                </button>
+                <div class="size-8 rounded-full bg-primary flex items-center justify-center font-bold text-xs">AD</div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- =============================================
+         FITUR: Sidebar Navigasi Admin (Kiri)
+         Berisi:
+         - Branding: icon + "Pitbox Admin"
+         - Sub-text: "Shell Eco-Marathon 2026"
+         - 6 menu navigasi (di-generate JS):
+           1. Settings Hub (aktif/highlight)
+           2. Vehicle Config
+           3. User Mgmt
+           4. MQTT Monitor
+           5. Track Assets
+           6. ML Controls
+         - System Status card (MQTT status + connected units)
+    ============================================= -->
+    <!-- SIDEBAR -->
+    <aside class="w-64 border-r border-border-dark bg-surface-dark flex flex-col shrink-0">
+        <div class="p-6 border-b border-border-dark">
+            <div class="flex items-center gap-3 text-primary mb-1">
+                <span class="material-symbols-outlined fill-1">settings_input_component</span>
+                <h1 class="text-lg font-bold tracking-tight">Pitbox Admin</h1>
+            </div>
+            <p class="text-xs text-[#9db9b0] font-medium uppercase tracking-widest">Shell Eco-Marathon 2026</p>
+        </div>
+            <nav class="flex-1 p-4 flex flex-col gap-2 overflow-y-auto" id="navContent"></nav>
+        <div class="p-4 border-t border-border-dark">
+            <div class="bg-primary/5 rounded-xl p-4 border border-primary/10">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[10px] font-bold text-primary uppercase">System Status</span>
+                    <span class="size-2 rounded-full bg-primary animate-pulse"></span>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <p class="text-xs text-[#9db9b0]">MQTT: <span class="text-white">Connected</span></p>
+                    <p class="text-xs text-[#9db9b0]">Units: <span class="text-white">Hydrogen, BEV</span></p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- =============================================
+         FITUR: Main Content Area
+    ============================================= -->
+    <main class="flex-1 flex flex-col overflow-hidden">
+
+        <!-- =============================================
+             FITUR: Sub-Header Bar
+             Berisi:
+             - Search bar (cari parameter, logs, users)
+             - Link: Overview, Strategy
+             - Tombol Live Feed (sensor / real-time)
+             - Avatar user
+        ============================================= -->
+        <!-- HEADER -->
+        <header class="h-16 border-b border-border-dark bg-surface-dark flex items-center justify-between px-8 shrink-0">
+            <div class="flex items-center gap-4 flex-1 max-w-xl">
+                <div class="relative w-full">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#9db9b0] text-xl">search</span>
+                    <input class="w-full bg-[#282f43] border-none rounded-xl pl-10 pr-4 h-10 text-sm text-white placeholder:text-[#9db9b0] focus:ring-1 focus:ring-primary" placeholder="Search parameters, logs, or users..." type="text"/>
+                </div>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-6 mr-6 border-r border-border-dark pr-6">
+                    <a class="text-sm font-medium text-[#9db9b0] hover:text-white" href="overview.html">Overview</a>
+                    <a class="text-sm font-medium text-[#9db9b0] hover:text-white" href="overview.html">Strategy</a>
+                </div>
+                <button class="bg-primary hover:bg-primary/90 text-background-dark text-xs font-bold uppercase px-4 py-2 rounded-lg flex items-center gap-2">
+                    <span class="material-symbols-outlined text-lg">sensors</span> Live Feed
+                </button>
+                <div class="size-10 rounded-full bg-slate-800 border border-border-dark flex items-center justify-center">
+                    <span class="material-symbols-outlined text-white">person</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- =============================================
+             FITUR: Page Content - Settings & Konfigurasi
+             Berisi:
+             - Heading + deskripsi halaman
+             - Tombol: Export Config, Commit Changes
+             - 3 Accordion panel:
+               1. Thresholds Per-Vehicle (parameter monitoring)
+               2. User Access (manajemen role)
+               3. Network Settings (MQTT config)
+        ============================================= -->
+        <!-- PAGE CONTENT -->
+        <div class="flex-1 overflow-y-auto bg-[#0a0c12] p-8">
+            <!-- HEADING -->
+            <div class="mb-8 flex justify-between items-end">
+                <div class="max-w-2xl">
+                    <h2 class="text-3xl font-black text-white tracking-tight">Settings & Threshold Admin Hub</h2>
+                    <p class="text-[#9db9b0] mt-2">Manage real-time telemetry parameters, safety overrides, and system configurations.</p>
+                </div>
+                <div class="flex gap-3">
+                    <button class="px-4 py-2 border border-border-dark rounded-lg text-sm font-medium text-white hover:bg-white/5">Export Config</button>
+                    <button class="px-4 py-2 bg-white text-background-dark rounded-lg text-sm font-bold hover:bg-slate-200">Commit Changes</button>
+                </div>
+            </div>
+
+            <!-- ACCORDION SETTINGS -->
+            <!-- =============================================
+                 FITUR: Accordion Settings Grid
+                 Layout: 2 kolom (XL), 1 kolom (mobile)
+            ============================================= -->
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                
+                <!-- =============================================
+                     FITUR: Accordion 1 - Thresholds Per-Vehicle
+                     Mengontrol 28 parameter monitoring via MQTT.
+                     Berisi 3 slider parameter contoh:
+                     1. PH LEL Limit (%) - batas gas hydrogen
+                     2. UC Voltage Sag (V) - penurunan tegangan
+                     3. Fuel Cell Temp (C) - suhu fuel cell
+                     Span full-width (xl:col-span-2)
+                ============================================= -->
+                <!-- THRESHOLDS SECTION -->
+                <div class="xl:col-span-2">
+                    <details class="group border border-primary/30 bg-[#131620] rounded-xl overflow-hidden" open="">
+                        <summary class="flex items-center justify-between p-5 cursor-pointer hover:bg-primary/5">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-primary/20 rounded-lg text-primary">
+                                    <span class="material-symbols-outlined">speed</span>
+                                </div>
+                                <div>
+                                    <p class="text-white font-bold">Thresholds Per-Vehicle</p>
+                                    <p class="text-xs text-[#9db9b0]">28 active parameters monitored via MQTT</p>
+                                </div>
+                            </div>
+                            <span class="material-symbols-outlined text-[#9db9b0] group-open:rotate-180">expand_more</span>
+                        </summary>
+                        <div class="p-6 border-t border-border-dark">
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <!-- Parameter Example 1 -->
+                                <div class="flex flex-col gap-3">
+                                    <div class="flex justify-between">
+                                        <p class="text-sm font-medium text-[#9db9b0]">PH LEL Limit (%)</p>
+                                        <span class="text-xs font-mono text-primary bg-primary/10 px-2 rounded">15.0%</span>
+                                    </div>
+                                    <div class="flex items-center gap-4">
+                                        <div class="flex-1 h-1.5 bg-[#282f43] rounded-full relative">
+                                            <div class="absolute inset-y-0 left-0 w-[15%] bg-primary rounded-full"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Parameter Example 2 -->
+                                <div class="flex flex-col gap-3">
+                                    <div class="flex justify-between">
+                                        <p class="text-sm font-medium text-[#9db9b0]">UC Voltage Sag (V)</p>
+                                        <span class="text-xs font-mono text-primary bg-primary/10 px-2 rounded">42.8V</span>
+                                    </div>
+                                    <div class="flex items-center gap-4">
+                                        <div class="flex-1 h-1.5 bg-[#282f43] rounded-full relative">
+                                            <div class="absolute inset-y-0 left-0 w-[42%] bg-primary rounded-full"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Parameter Example 3 -->
+                                <div class="flex flex-col gap-3">
+                                    <div class="flex justify-between">
+                                        <p class="text-sm font-medium text-[#9db9b0]">Fuel Cell Temp (C)</p>
+                                        <span class="text-xs font-mono text-primary bg-primary/10 px-2 rounded">68°C</span>
+                                    </div>
+                                    <div class="flex items-center gap-4">
+                                        <div class="flex-1 h-1.5 bg-[#282f43] rounded-full relative">
+                                            <div class="absolute inset-y-0 left-0 w-[68%] bg-primary rounded-full"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+                </div>
+
+                <!-- =============================================
+                     FITUR: Accordion 2 - User Access Management
+                     Menampilkan role yang aktif:
+                     - Admin Access: Full system control
+                     - Manager Access: Dashboard & telemetry only
+                ============================================= -->
+                <!-- USER MANAGEMENT -->
+                <details class="group border border-border-dark bg-surface-dark rounded-xl overflow-hidden">
+                    <summary class="flex items-center justify-between p-5 cursor-pointer hover:bg-white/5">
+                        <div class="flex items-center gap-3 text-[#9db9b0] group-open:text-white">
+                            <span class="material-symbols-outlined">person_pin</span>
+                            <p class="font-bold">User Access</p>
+                        </div>
+                        <span class="material-symbols-outlined text-[#9db9b0] group-open:rotate-180">expand_more</span>
+                    </summary>
+                    <div class="p-5 border-t border-border-dark">
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 bg-black/30 rounded-lg">
+                                <div>
+                                    <p class="font-medium">Admin Access</p>
+                                    <p class="text-xs text-[#9db9b0]">Full system control</p>
+                                </div>
+                                <span class="px-2 py-1 bg-primary/20 text-primary text-xs rounded font-bold">ACTIVE</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-black/30 rounded-lg">
+                                <div>
+                                    <p class="font-medium">Manager Access</p>
+                                    <p class="text-xs text-[#9db9b0]">Dashboard & telemetry only</p>
+                                </div>
+                                <span class="px-2 py-1 bg-primary/20 text-primary text-xs rounded font-bold">ACTIVE</span>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <!-- =============================================
+                     FITUR: Accordion 3 - Network Configuration
+                     Konfigurasi jaringan:
+                     - MQTT Broker: alamat IP + port (192.168.1.100:1883)
+                     - Update Interval: interval refresh data (500ms)
+                ============================================= -->
+                <!-- NETWORK CONFIG -->
+                <details class="group border border-border-dark bg-surface-dark rounded-xl overflow-hidden">
+                    <summary class="flex items-center justify-between p-5 cursor-pointer hover:bg-white/5">
+                        <div class="flex items-center gap-3 text-[#9db9b0] group-open:text-white">
+                            <span class="material-symbols-outlined">computer</span>
+                            <p class="font-bold">Network Settings</p>
+                        </div>
+                        <span class="material-symbols-outlined text-[#9db9b0] group-open:rotate-180">expand_more</span>
+                    </summary>
+                    <div class="p-5 border-t border-border-dark">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-[#9db9b0] mb-2 uppercase">MQTT Broker</label>
+                                <input class="w-full bg-black/30 border border-border-dark rounded-lg px-3 py-2 text-white text-sm focus:ring-1 focus:ring-primary outline-none" value="192.168.1.100:1883" type="text"/>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-[#9db9b0] mb-2 uppercase">Update Interval (ms)</label>
+                                <input class="w-full bg-black/30 border border-border-dark rounded-lg px-3 py-2 text-white text-sm focus:ring-1 focus:ring-primary outline-none" value="500" type="number"/>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </div>
+    </main>
+
+    <!-- =============================================
+         FITUR: JavaScript - Admin Access Control & Sidebar Builder
+
+         1. Admin Access Check:
+            - Ambil role dari URL ?role= atau sessionStorage
+            - Jika BUKAN admin → redirect ke overview.html
+            - Simpan role ke sessionStorage
+
+         2. Sidebar Navbar Builder:
+            - 6 menu item (Settings Hub aktif/highlight)
+            - Menu lain: Vehicle Config, User Mgmt, MQTT Monitor,
+              Track Assets, ML Controls
+            - Item aktif ditandai bg-primary/10 + border primary
+    ============================================= -->
+    <script>
+        // Check admin access only
+        const urlParams = new URLSearchParams(window.location.search);
+        const role = urlParams.get('role') || sessionStorage.getItem('userRole') || 'admin';
+        
+        if (role !== 'admin') {
+            window.location.href = `overview.html?role=${role}`;
+        }
+        
+        sessionStorage.setItem('userRole', role);
+
+        // Navigate back to overview
+        function goToOverview() {
+            window.location.href = 'overview.html?role=' + role;
+        }
+
+        // Build top navbar
+        const topNav = document.getElementById('topNav');
+        if (topNav) {
+            const topNavItems = ['Overview', 'PH-H2', 'UC-BE', 'Settings'];
+            const navLinks = {
+                'Overview': 'overview.html',
+                'PH-H2': 'ph-h2.html',
+                'UC-BE': 'uc-be.html',
+                'Settings': 'setting.html'
+            };
+            topNavItems.forEach(item => {
+                const link = document.createElement('a');
+                link.href = navLinks[item] + '?role=' + role;
+                const isActive = navLinks[item] === 'setting.html';
+                link.className = isActive
+                    ? 'text-sm font-bold text-primary'
+                    : 'text-sm font-medium text-white/60 hover:text-white transition-colors';
+                link.textContent = item;
+                topNav.appendChild(link);
+            });
+        }
+
+        // Build sidebar navbar
+        const navItems = [
+            { label: 'Settings Hub', href: 'setting.html', icon: 'settings_input_component', active: true },
+            { label: 'Vehicle Config', href: '#', icon: 'electric_car' },
+            { label: 'User Mgmt', href: '#', icon: 'group' },
+            { label: 'MQTT Monitor', href: '#', icon: 'monitoring' },
+            { label: 'Track Assets', href: '#', icon: 'map' },
+            { label: 'ML Controls', href: '#', icon: 'psychology' }
+        ];
+
+        const navContent = document.getElementById('navContent');
+        navItems.forEach(item => {
+            const link = document.createElement('div');
+            if (item.active) {
+                link.className = 'flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary border border-primary/20';
+            } else {
+                link.className = 'flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors text-[#9db9b0] hover:text-white';
+            }
+            link.innerHTML = `<span class="material-symbols-outlined">${item.icon}</span><span class="text-sm font-medium">${item.label}</span>`;
+            navContent.appendChild(link);
+        });
+    </script>
+</body>
+</html>
