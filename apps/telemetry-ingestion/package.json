@@ -1,0 +1,16 @@
+{
+  "name": "@apatte/telemetry-ingestion",
+  "private": true,
+  "version": "0.0.0",
+  "dependencies": {
+    "@apatte/env": "workspace:*"
+  },
+  "scripts": {
+    "dev": "tsx src/validate-env.ts && node ../../scripts/placeholder-task.mjs dev @apatte/telemetry-ingestion",
+    "docker:start": "tsx src/server.ts",
+    "build": "node ../../scripts/placeholder-task.mjs build @apatte/telemetry-ingestion",
+    "lint": "node ../../scripts/placeholder-task.mjs lint @apatte/telemetry-ingestion",
+    "test": "node ../../scripts/placeholder-task.mjs test @apatte/telemetry-ingestion",
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}

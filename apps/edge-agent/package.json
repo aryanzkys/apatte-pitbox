@@ -1,0 +1,15 @@
+{
+  "name": "@apatte/edge-agent",
+  "private": true,
+  "version": "0.0.0",
+  "dependencies": {
+    "@apatte/env": "workspace:*"
+  },
+  "scripts": {
+    "dev": "tsx src/validate-env.ts && node ../../scripts/placeholder-task.mjs dev @apatte/edge-agent",
+    "build": "node ../../scripts/placeholder-task.mjs build @apatte/edge-agent",
+    "lint": "node ../../scripts/placeholder-task.mjs lint @apatte/edge-agent",
+    "test": "node ../../scripts/placeholder-task.mjs test @apatte/edge-agent",
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}

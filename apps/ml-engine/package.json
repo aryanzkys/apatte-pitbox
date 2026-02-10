@@ -1,0 +1,15 @@
+{
+  "name": "@apatte/ml-engine",
+  "private": true,
+  "version": "0.0.0",
+  "dependencies": {
+    "@apatte/env": "workspace:*"
+  },
+  "scripts": {
+    "dev": "tsx src/validate-env.ts && node ../../scripts/placeholder-task.mjs dev @apatte/ml-engine",
+    "build": "node ../../scripts/placeholder-task.mjs build @apatte/ml-engine",
+    "lint": "node ../../scripts/placeholder-task.mjs lint @apatte/ml-engine",
+    "test": "node ../../scripts/placeholder-task.mjs test @apatte/ml-engine",
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}

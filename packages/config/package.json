@@ -1,0 +1,14 @@
+{
+  "name": "@apatte/config",
+  "private": true,
+  "version": "0.0.0",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "dev": "node ../../scripts/placeholder-task.mjs dev @apatte/config",
+    "build": "node ../../scripts/placeholder-task.mjs build @apatte/config",
+    "lint": "node ../../scripts/placeholder-task.mjs lint @apatte/config",
+    "test": "node ../../scripts/placeholder-task.mjs test @apatte/config",
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}

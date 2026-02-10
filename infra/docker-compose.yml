@@ -1,0 +1,41 @@
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_sub -h localhost -t '$$SYS/broker/uptime' -C 1 -W 3"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  telemetry-ingestion:
+    build:
+      context: ..
+      dockerfile: apps/telemetry-ingestion/Dockerfile
+    environment:
+      MQTT_BROKER_URL: ${MQTT_BROKER_URL:-mqtt://mosquitto:1883}
+      TELEMETRY_TOPIC_PREFIX: ${TELEMETRY_TOPIC_PREFIX:-apatte}
+      INGESTION_BATCH_SIZE: ${INGESTION_BATCH_SIZE:-200}
+      INGESTION_FLUSH_MS: ${INGESTION_FLUSH_MS:-250}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    healthcheck:
+      test:
+        ["CMD", "node", "-e", "fetch('http://localhost:8081/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  mosquitto_data:
+  mosquitto_log:

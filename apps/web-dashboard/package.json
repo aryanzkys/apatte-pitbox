@@ -1,0 +1,15 @@
+{
+  "name": "@apatte/web-dashboard",
+  "private": true,
+  "version": "0.0.0",
+  "dependencies": {
+    "@apatte/env": "workspace:*"
+  },
+  "scripts": {
+    "dev": "tsx src/validate-env.ts && node ../../scripts/placeholder-task.mjs dev @apatte/web-dashboard",
+    "build": "node ../../scripts/placeholder-task.mjs build @apatte/web-dashboard",
+    "lint": "node ../../scripts/placeholder-task.mjs lint @apatte/web-dashboard",
+    "test": "node ../../scripts/placeholder-task.mjs test @apatte/web-dashboard",
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}

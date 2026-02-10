@@ -1,0 +1,28 @@
+{
+  "name": "apatte-pitbox",
+  "private": true,
+  "description": "Apatte Pitbox monorepo workspace",
+  "repository": {
+    "type": "git",
+    "url": "https://example.com/apatte-pitbox"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "typecheck": "turbo typecheck",
+    "clean": "turbo clean && rimraf node_modules"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "rimraf": "^6.0.1",
+    "turbo": "^2.1.3",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

@@ -16,6 +16,7 @@ Status: Phase 1: Foundation (in progress)
 	- [apps/ml-engine](apps/ml-engine/README.md)
 - Packages
 	- [packages/config](packages/config/README.md)
+	- [packages/env](packages/env)
 	- [packages/types](packages/types/README.md)
 	- [packages/utils](packages/utils/README.md)
 - [infra](infra/README.md)
@@ -49,3 +50,33 @@ Status: Phase 1: Foundation (in progress)
 - Race Ops: build ingestion, dashboard workflows, and core alerting.
 - AI: add model pipelines, predictions, and decision support.
 - Production hardening: reliability, observability, and security maturity.
+
+## Getting Started
+Required tools:
+- Node.js >= 20
+- pnpm
+
+Commands:
+- pnpm install
+- pnpm dev
+- pnpm build
+- pnpm lint
+- pnpm typecheck
+- pnpm -r typecheck
+
+Note: Apps are placeholders in Phase 1/2 and will print a “Not implemented yet” message.
+
+## Environment Setup
+See [docs/env.md](docs/env.md) for the full environment variable strategy.
+
+Quick start:
+- cp .env.local.example .env
+- pnpm install
+- pnpm dev
+
+## CI
+GitHub Actions runs install, lint, typecheck, and test on push and PR.
+Local equivalents:
+- pnpm lint
+- pnpm typecheck
+- pnpm test

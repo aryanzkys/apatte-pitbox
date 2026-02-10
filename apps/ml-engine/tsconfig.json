@@ -1,0 +1,10 @@
+{
+  "extends": "@apatte/tsconfig/node.json",
+  "compilerOptions": {
+    "composite": true,
+    "rootDir": "./src",
+    "outDir": "./dist"
+  },
+  "include": ["src"],
+  "exclude": ["dist", "node_modules"]
+}
