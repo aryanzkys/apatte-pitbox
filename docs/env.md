@@ -37,6 +37,8 @@ Apps will fail fast if required variables are missing.
 | SUPABASE_URL | web-dashboard | http://localhost:54321 | Required for dashboard runtime |
 | SUPABASE_ANON_KEY | web-dashboard | anon-placeholder | Required for dashboard runtime |
 | SUPABASE_SERVICE_ROLE_KEY | server-side only | (empty) | DO NOT expose to client |
+| NEXT_PUBLIC_SUPABASE_URL | web-dashboard | http://localhost:54321 | Required for Next.js client |
+| NEXT_PUBLIC_SUPABASE_ANON_KEY | web-dashboard | anon-placeholder | Required for Next.js client |
 | MQTT_BROKER_URL | telemetry-ingestion, edge-agent | mqtt://localhost:1883 | Required for ingestion/edge |
 | MQTT_USERNAME | telemetry-ingestion, edge-agent | (empty) | Optional |
 | MQTT_PASSWORD | telemetry-ingestion, edge-agent | (empty) | Optional |

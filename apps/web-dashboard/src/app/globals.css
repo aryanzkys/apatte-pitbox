@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-primary: #1e3b8a;
+  --color-background-light: #f6f6f8;
+  --color-background-dark: #0a0c12;
+  --color-surface-dark: #131620;
+  --color-border-dark: #282f43;
+  --color-accent-hydrogen: #3b82f6;
+  --color-accent-electric: #10b981;
+  --color-critical: #ef4444;
+  --color-warning: #f59e0b;
+  --font-display: "Space Grotesk", sans-serif;
+}
+
+body {
+  font-family: "Space Grotesk", sans-serif;
+  background: linear-gradient(135deg, #0a0c12 0%, #131620 100%);
+  overflow-x: hidden;
+}
+
+.circuit-bg {
+  background-image:
+    radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
+}
+
+.glass-card {
+  background: rgba(19, 22, 32, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid #282f43;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(40, 47, 67, 0.3);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e3b8a;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #162d6e;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1e3b8a rgba(40, 47, 67, 0.3);
+}
+
+.scanline {
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15),
+    rgba(0, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  animation: scan 8s linear infinite;
+}
+
+@keyframes scan {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(10px);
+  }
+}

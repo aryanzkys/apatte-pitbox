@@ -74,6 +74,13 @@ Quick start:
 - pnpm install
 - pnpm dev
 
+## Local Supabase
+See [docs/supabase-local.md](docs/supabase-local.md) for setup details.
+
+Quick start:
+- pnpm supabase:start
+- pnpm supabase:status
+
 ## CI
 GitHub Actions runs install, lint, typecheck, and test on push and PR.
 Local equivalents:

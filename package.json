@@ -16,6 +16,12 @@
     "lint": "turbo lint",
     "test": "turbo test",
     "typecheck": "turbo typecheck",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:status": "supabase status",
+    "supabase:reset": "supabase db reset",
+    "db:reset": "supabase db reset",
+    "dev:db": "pnpm supabase:start && pnpm db:reset",
     "clean": "turbo clean && rimraf node_modules"
   },
   "devDependencies": {
