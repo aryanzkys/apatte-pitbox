@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+
+type MqttStatus = "connected" | "not_connected" | "not_configured";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,6 +15,85 @@ export default function LoginPage() {
   const [role, setRole] = useState("admin");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mqttStatus, setMqttStatus] = useState<MqttStatus>("not_configured");
+  const [mqttLatency, setMqttLatency] = useState<string>("--");
+  const [mqttPackets, setMqttPackets] = useState<string>("--");
+  const [mqttUptime, setMqttUptime] = useState<string>("--:--:--");
+
+  const mqttUrl = process.env.NEXT_PUBLIC_MQTT_BROKER_URL ?? "";
+
+  const statusLabel = useMemo(() => {
+    if (mqttStatus === "connected") return "CONNECTED";
+    if (mqttStatus === "not_connected") return "NOT CONNECTED";
+    return "NOT CONFIGURED";
+  }, [mqttStatus]);
+
+  const statusColor = useMemo(() => {
+    if (mqttStatus === "connected") return "bg-accent-electric";
+    if (mqttStatus === "not_connected") return "bg-critical";
+    return "bg-warning";
+  }, [mqttStatus]);
+
+  useEffect(() => {
+    if (!mqttUrl) {
+      setMqttStatus("not_configured");
+      setMqttLatency("--");
+      setMqttPackets("--");
+      setMqttUptime("--:--:--");
+      return;
+    }
+
+    if (!mqttUrl.startsWith("ws://") && !mqttUrl.startsWith("wss://")) {
+      setMqttStatus("not_connected");
+      setMqttLatency("--");
+      setMqttPackets("--");
+      setMqttUptime("--:--:--");
+      return;
+    }
+
+    let ws: WebSocket | null = null;
+    let uptimeTimer: number | null = null;
+    const startTime = Date.now();
+
+    const tickUptime = () => {
+      const diff = Date.now() - startTime;
+      const seconds = Math.floor(diff / 1000);
+      const hours = String(Math.floor(seconds / 3600)).padStart(2, "0");
+      const minutes = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
+      const secs = String(seconds % 60).padStart(2, "0");
+      setMqttUptime(`${hours}:${minutes}:${secs}`);
+    };
+
+    ws = new WebSocket(mqttUrl);
+    const connectStart = Date.now();
+
+    ws.onopen = () => {
+      setMqttStatus("connected");
+      setMqttLatency(`${Date.now() - connectStart}ms`);
+      setMqttPackets("0");
+      tickUptime();
+      uptimeTimer = window.setInterval(tickUptime, 1000);
+    };
+
+    ws.onerror = () => {
+      setMqttStatus("not_connected");
+      setMqttLatency("--");
+      setMqttPackets("--");
+      setMqttUptime("--:--:--");
+    };
+
+    ws.onclose = () => {
+      setMqttStatus("not_connected");
+      setMqttLatency("--");
+      setMqttPackets("--");
+      setMqttUptime("--:--:--");
+    };
+
+    return () => {
+      if (uptimeTimer) window.clearInterval(uptimeTimer);
+      ws?.close();
+    };
+  }, [mqttUrl]);
 
   const handleLogin = async () => {
     setLoading(true);
@@ -112,7 +193,7 @@ export default function LoginPage() {
               <div className="space-y-4">
                 <div className="flex flex-col gap-2">
                   <label className="text-white/60 text-[10px] font-bold tracking-widest uppercase ml-1">
-                    Engineer Identifier
+                    Engineer Identifier (Email)
                   </label>
                   <div className="relative group">
                     <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-accent-electric transition-colors">
@@ -120,7 +201,7 @@ export default function LoginPage() {
                     </span>
                     <input
                       className="w-full pl-12 pr-4 py-4 bg-black/40 border border-white/10 rounded-lg text-white focus:outline-none focus:border-accent-electric focus:ring-1 focus:ring-accent-electric/50 transition-all font-mono placeholder:text-white/10"
-                      placeholder="ENGINEER_ID"
+                      placeholder="Your email address"
                       type="email"
                       value={email}
                       onChange={event => setEmail(event.target.value)}
@@ -132,7 +213,7 @@ export default function LoginPage() {
 
                 <div className="flex flex-col gap-2">
                   <label className="text-white/60 text-[10px] font-bold tracking-widest uppercase ml-1">
-                    Security Token
+                    Password
                   </label>
                   <div className="relative group">
                     <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-accent-electric transition-colors">
@@ -140,7 +221,7 @@ export default function LoginPage() {
                     </span>
                     <input
                       className="w-full pl-12 pr-4 py-4 bg-black/40 border border-white/10 rounded-lg text-white focus:outline-none focus:border-accent-electric focus:ring-1 focus:ring-accent-electric/50 transition-all font-mono placeholder:text-white/10"
-                      placeholder="••••••••••••"
+                      placeholder="Your password"
                       type="password"
                       value={password}
                       onChange={event => setPassword(event.target.value)}
@@ -220,9 +301,9 @@ export default function LoginPage() {
               MQTT:
             </span>
             <div className="flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-accent-electric" />
+              <div className={`w-1.5 h-1.5 rounded-full ${statusColor}`} />
               <span className="text-[10px] text-white/80 font-mono uppercase">
-                CONNECTED
+                {statusLabel}
               </span>
             </div>
           </div>
@@ -232,7 +313,7 @@ export default function LoginPage() {
               TELEMETRY PACKETS:
             </span>
             <span className="text-[10px] text-white/80 font-mono">
-              1,402,883
+              {mqttStatus === "connected" ? mqttPackets : "--"}
             </span>
           </div>
 
@@ -241,7 +322,7 @@ export default function LoginPage() {
               LATENCY:
             </span>
             <span className="text-[10px] text-accent-electric font-mono">
-              14ms
+              {mqttStatus === "connected" ? mqttLatency : "--"}
             </span>
           </div>
         </div>
@@ -252,7 +333,7 @@ export default function LoginPage() {
               schedule
             </span>
             <span className="text-[10px] text-white/60 font-mono tracking-tighter uppercase">
-              Uptime: 142:05:22
+              Uptime: {mqttStatus === "connected" ? mqttUptime : "--:--:--"}
             </span>
           </div>
         </div>
