@@ -31,6 +31,21 @@ body {
   border: 1px solid #282f43;
 }
 
+.glass-panel {
+  background: rgba(19, 22, 32, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid #282f43;
+}
+
+.grid-bg {
+  background-image: radial-gradient(#282f43 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.map-gradient {
+  background: linear-gradient(to top, #0a0c12 0%, transparent 20%);
+}
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;

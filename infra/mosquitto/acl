@@ -1,0 +1,5 @@
+# Dev-only ACL
+user apatte
+topic readwrite apatte/#
+topic readwrite telemetry/#
+pattern readwrite $SYS/broker/connection/#

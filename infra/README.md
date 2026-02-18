@@ -24,4 +24,13 @@ Environment:
 - To override, copy infra/.env.example to infra/.env and edit values.
 
 Notes:
-- Mosquitto allows anonymous connections for dev only.
+- Mosquitto requires username/password (dev-only credentials).
+
+## MQTT auth (dev)
+Test publish:
+- mosquitto_pub -h localhost -p 1883 -u apatte -P apatte-dev -t apatte/test -m "hello"
+
+Test subscribe:
+- mosquitto_sub -h localhost -p 1883 -u apatte -P apatte-dev -t apatte/# -v
+
+Expected: publish should appear in the subscriber output. Anonymous connections should fail.

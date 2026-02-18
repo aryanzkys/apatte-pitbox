@@ -22,3 +22,12 @@ export const getSupabaseServerClient = (): SupabaseClient => {
     }
   );
 };
+
+export const getServerUser = async () => {
+  const supabase = getSupabaseServerClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  return user ?? null;
+};

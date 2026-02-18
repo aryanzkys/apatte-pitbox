@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { Session, User } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
@@ -14,6 +15,7 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const router = useRouter();
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -28,17 +30,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     const { data: subscription } = supabase.auth.onAuthStateChange(
-      (_event, nextSession) => {
-        setSession(nextSession);
-        setLoading(false);
+      (event, nextSession) => {
+        if (event === "SIGNED_OUT") {
+          setSession(null);
+          setLoading(false);
+          router.replace("/login");
+          return;
+        }
+
+        if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") {
+          setSession(nextSession);
+          setLoading(false);
+        }
       }
     );
+
+    const intervalId = window.setInterval(async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        setSession(null);
+        setLoading(false);
+        router.replace("/login");
+      }
+    }, 5 * 60 * 1000);
 
     return () => {
       isMounted = false;
       subscription?.unsubscribe();
+      window.clearInterval(intervalId);
     };
-  }, [supabase]);
+  }, [router, supabase]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -48,9 +69,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       signOut: async () => {
         await supabase.auth.signOut();
         setSession(null);
+        router.replace("/login");
       }
     }),
-    [loading, session, supabase]
+    [loading, router, session, supabase]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
