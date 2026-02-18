@@ -22,6 +22,8 @@ Ports:
 Environment:
 - Defaults are embedded in the compose file.
 - To override, copy infra/.env.example to infra/.env and edit values.
+- For Supabase inserts, set SUPABASE_SERVICE_ROLE_KEY from:
+	- pnpm supabase:status
 
 Notes:
 - Mosquitto requires username/password (dev-only credentials).

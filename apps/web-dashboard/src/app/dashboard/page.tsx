@@ -2,6 +2,28 @@ import Link from "next/link";
 import { requireRole } from "@/lib/auth/require-role";
 import type { AppRole } from "@/lib/auth/roles";
 import { AuthGate } from "@/components/auth/AuthGate";
+import {
+  AlertsTicker,
+  ComponentRow,
+  DashboardLiveProvider,
+  EfficiencyValue,
+  ErrorBanner,
+  LapText,
+  MapStat,
+  MLStrategistPrediction,
+  MLStrategistText,
+  NotificationButton,
+  Panels,
+  ProgressBar,
+  SectorBars,
+  SettingsButton,
+  SpeedDeltaBadge,
+  SpeedValue,
+  SystemStatusBadge,
+  TankValue,
+  TempValue,
+  VoltageValue
+} from "@/components/dashboard/DashboardLive";
 
 type NavItem = {
   label: string;
@@ -21,6 +43,7 @@ export default async function DashboardPage() {
 
   return (
     <AuthGate>
+      <DashboardLiveProvider>
       <div className="bg-background-light dark:bg-background-dark text-white min-h-screen flex flex-col overflow-auto">
       <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-border-dark bg-surface-dark px-6 py-3 shrink-0">
         <div className="flex items-center gap-4 text-white">
@@ -41,7 +64,7 @@ export default async function DashboardPage() {
           <h2 className="text-white text-xl font-bold leading-tight tracking-tight uppercase">
             Apatte Command Center
             <span className="text-primary/60 ml-2 font-normal text-sm">
-              Shell Eco-Marathon 2027
+              Shell Eco-Marathon 2026
             </span>
           </h2>
           <nav id="topNav" className="flex gap-6 ml-8 border-l border-border-dark pl-6">
@@ -82,34 +105,39 @@ export default async function DashboardPage() {
             <div className="flex flex-col w-48">
               <div className="flex justify-between text-[10px] font-bold uppercase text-accent-hydrogen mb-1">
                 <span>PH-H2 Hydrogen</span>
-                <span>Lap 13/20</span>
+                <span>
+                  <LapText vehicle="phH2" />
+                </span>
               </div>
               <div className="h-1.5 w-full bg-border-dark rounded-full overflow-hidden">
-                <div className="h-full bg-accent-hydrogen w-[65%]"></div>
+                <ProgressBar
+                  vehicle="phH2"
+                  kind="lap"
+                  className="h-full bg-accent-hydrogen w-[65%]"
+                />
               </div>
             </div>
             <div className="flex flex-col w-48">
               <div className="flex justify-between text-[10px] font-bold uppercase text-accent-electric mb-1">
                 <span>UC-BE Electric</span>
-                <span>Lap 14/20</span>
+                <span>
+                  <LapText vehicle="ucBe" />
+                </span>
               </div>
               <div className="h-1.5 w-full bg-border-dark rounded-full overflow-hidden">
-                <div className="h-full bg-accent-electric w-[72%]"></div>
+                <ProgressBar
+                  vehicle="ucBe"
+                  kind="lap"
+                  className="h-full bg-accent-electric w-[72%]"
+                />
               </div>
             </div>
           </div>
           <div className="flex gap-3">
-            <div className="flex items-center px-3 py-1 bg-primary/20 rounded border border-primary/40">
-              <span className="size-2 rounded-full bg-green-500 animate-pulse mr-2"></span>
-              <span className="text-xs font-bold text-primary">SYSTEM: ONLINE</span>
-            </div>
-            <button className="flex items-center justify-center rounded-lg h-9 w-9 bg-border-dark hover:bg-primary transition-colors">
-              <span className="material-symbols-outlined text-[20px]">notifications</span>
-            </button>
+            <SystemStatusBadge />
+            <NotificationButton />
             {role === "engineer" ? (
-              <button className="flex items-center justify-center rounded-lg h-9 w-9 bg-border-dark hover:bg-primary transition-colors">
-                <span className="material-symbols-outlined text-[20px]">settings</span>
-              </button>
+              <SettingsButton />
             ) : null}
             <div className="flex items-center gap-2 pl-2">
               <div className="size-8 rounded-full bg-primary flex items-center justify-center font-bold text-xs">
@@ -138,9 +166,11 @@ export default async function DashboardPage() {
             <span className="text-xs text-slate-400 uppercase font-bold absolute top-3">
               Current Speed
             </span>
-            <span className="text-5xl font-bold text-accent-hydrogen">42.5</span>
+            <span className="text-5xl font-bold text-accent-hydrogen">
+              <SpeedValue vehicle="phH2" />
+            </span>
             <span className="text-sm font-medium text-slate-500">KM/H</span>
-            <div className="mt-2 text-xs font-bold text-green-500">+2.1% ↑</div>
+            <SpeedDeltaBadge vehicle="phH2" />
           </div>
           <div className="flex flex-col gap-3">
             <div className="p-4 rounded-lg border border-border-dark bg-surface-dark/40">
@@ -148,11 +178,17 @@ export default async function DashboardPage() {
                 Fuel Efficiency
               </p>
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold">185</span>
+                <span className="text-2xl font-bold">
+                  <EfficiencyValue vehicle="phH2" />
+                </span>
                 <span className="text-xs text-slate-500">km/m³</span>
               </div>
               <div className="mt-2 h-1 bg-border-dark rounded-full overflow-hidden">
-                <div className="h-full bg-accent-hydrogen w-[85%]"></div>
+                <ProgressBar
+                  vehicle="phH2"
+                  kind="efficiency"
+                  className="h-full bg-accent-hydrogen w-[85%]"
+                />
               </div>
             </div>
             <div className="p-4 rounded-lg border border-border-dark bg-surface-dark/40">
@@ -160,21 +196,31 @@ export default async function DashboardPage() {
                 Hydrogen Tank (LEL)
               </p>
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold">45</span>
+                <span className="text-2xl font-bold">
+                  <TankValue vehicle="phH2" />
+                </span>
                 <span className="text-xs text-slate-500">% Remaining</span>
               </div>
               <div className="mt-2 h-1.5 bg-border-dark rounded-full overflow-hidden">
-                <div className="h-full bg-accent-hydrogen w-[45%]"></div>
+                <ProgressBar
+                  vehicle="phH2"
+                  kind="tank"
+                  className="h-full bg-accent-hydrogen w-[45%]"
+                />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 rounded-lg border border-border-dark bg-surface-dark/20 text-center">
                 <p className="text-[8px] text-slate-500 uppercase font-bold">Temp</p>
-                <p className="text-lg font-bold">34°C</p>
+                <p className="text-lg font-bold">
+                  <TempValue vehicle="phH2" />°C
+                </p>
               </div>
               <div className="p-3 rounded-lg border border-border-dark bg-surface-dark/20 text-center">
                 <p className="text-[8px] text-slate-500 uppercase font-bold">Voltage</p>
-                <p className="text-lg font-bold">24.2V</p>
+                <p className="text-lg font-bold">
+                  <VoltageValue vehicle="phH2" />V
+                </p>
               </div>
             </div>
           </div>
@@ -183,11 +229,7 @@ export default async function DashboardPage() {
               Sector Performance
             </p>
             <div className="flex items-end justify-between h-24 px-2">
-              <div className="w-4 bg-accent-hydrogen/40 h-[40%] rounded-t"></div>
-              <div className="w-4 bg-accent-hydrogen/60 h-[65%] rounded-t"></div>
-              <div className="w-4 bg-accent-hydrogen h-[90%] rounded-t"></div>
-              <div className="w-4 bg-accent-hydrogen/50 h-[30%] rounded-t"></div>
-              <div className="w-4 bg-accent-hydrogen/80 h-[75%] rounded-t"></div>
+              <SectorBars vehicle="phH2" />
             </div>
             <div className="flex justify-between text-[8px] mt-2 text-slate-500 font-bold">
               <span>S1</span>
@@ -199,7 +241,7 @@ export default async function DashboardPage() {
           </div>
         </aside>
 
-        <section className="flex-1 flex flex-col relative min-h-[600px]">
+        <section className="flex-1 flex flex-col relative min-h-150">
           <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
             <button className="bg-surface-dark p-2 rounded-lg border border-border-dark shadow-2xl hover:bg-primary transition-colors">
               <span className="material-symbols-outlined">layers</span>
@@ -219,7 +261,7 @@ export default async function DashboardPage() {
             </div>
             <div className="absolute inset-0 map-gradient pointer-events-none"></div>
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="relative w-[80%] h-[80%] border-4 border-white/5 rounded-full rotate-[12deg]">
+              <div className="relative w-[80%] h-[80%] border-4 border-white/5 rounded-full rotate-12">
                 <div className="absolute top-[15%] left-[65%] size-6 flex flex-col items-center">
                   <div className="size-3 bg-accent-hydrogen border-2 border-white rounded-full shadow-[0_0_15px_#3b82f6]"></div>
                   <span className="mt-1 text-[8px] font-bold bg-background-dark/80 px-1">PH-H2</span>
@@ -234,17 +276,23 @@ export default async function DashboardPage() {
               <div className="px-6 py-4 glass-panel rounded-xl flex items-center gap-6">
                 <div className="flex flex-col">
                   <span className="text-[10px] text-slate-400 font-bold uppercase">Estimated Finish</span>
-                  <span className="text-xl font-bold text-white">14:32:05</span>
+                  <span className="text-xl font-bold text-white">
+                    <MapStat kind="finish" />
+                  </span>
                 </div>
                 <div className="w-px h-8 bg-border-dark"></div>
                 <div className="flex flex-col">
                   <span className="text-[10px] text-slate-400 font-bold uppercase">Track Temp</span>
-                  <span className="text-xl font-bold text-white">52.4°C</span>
+                  <span className="text-xl font-bold text-white">
+                    <MapStat kind="track" />
+                  </span>
                 </div>
                 <div className="w-px h-8 bg-border-dark"></div>
                 <div className="flex flex-col">
                   <span className="text-[10px] text-slate-400 font-bold uppercase">Wind Speed</span>
-                  <span className="text-xl font-bold text-white">12 km/h NW</span>
+                  <span className="text-xl font-bold text-white">
+                    <MapStat kind="wind" />
+                  </span>
                 </div>
               </div>
             </div>
@@ -256,24 +304,7 @@ export default async function DashboardPage() {
               <span className="font-bold text-xs">CRITICAL ALERTS</span>
             </div>
             <div className="flex-1 flex gap-8 items-center px-6 overflow-x-hidden whitespace-nowrap">
-              <div className="flex items-center gap-2 text-critical animate-pulse">
-                <span className="text-[10px] font-bold px-2 py-0.5 border border-critical rounded">14:02</span>
-                <span className="text-sm font-medium">
-                  PH-H2: Fuel cell temperature exceeding nominal limits (72°C)
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-warning">
-                <span className="text-[10px] font-bold px-2 py-0.5 border border-warning rounded">13:58</span>
-                <span className="text-sm font-medium">
-                  UC-BE: Voltage drop detected in Sector 3 recovery
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-400 opacity-50">
-                <span className="text-[10px] font-bold px-2 py-0.5 border border-slate-700 rounded">13:55</span>
-                <span className="text-sm font-medium">
-                  System: Lap 13 telemetry archived successfully
-                </span>
-              </div>
+              <AlertsTicker />
             </div>
           </div>
         </section>
@@ -287,9 +318,11 @@ export default async function DashboardPage() {
             <span className="text-xs text-slate-400 uppercase font-bold absolute top-3">
               Current Speed
             </span>
-            <span className="text-5xl font-bold text-accent-electric">38.2</span>
+            <span className="text-5xl font-bold text-accent-electric">
+              <SpeedValue vehicle="ucBe" />
+            </span>
             <span className="text-sm font-medium text-slate-500">KM/H</span>
-            <div className="mt-2 text-xs font-bold text-critical">-0.5% ↓</div>
+            <SpeedDeltaBadge vehicle="ucBe" />
           </div>
           <div className="flex flex-col gap-3">
             <div className="p-4 rounded-lg border border-border-dark bg-surface-dark/40">
@@ -297,11 +330,17 @@ export default async function DashboardPage() {
                 Energy Efficiency
               </p>
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold">212</span>
+                <span className="text-2xl font-bold">
+                  <EfficiencyValue vehicle="ucBe" />
+                </span>
                 <span className="text-xs text-slate-500">km/kWh</span>
               </div>
               <div className="mt-2 h-1 bg-border-dark rounded-full overflow-hidden">
-                <div className="h-full bg-accent-electric w-[92%]"></div>
+                <ProgressBar
+                  vehicle="ucBe"
+                  kind="efficiency"
+                  className="h-full bg-accent-electric w-[92%]"
+                />
               </div>
             </div>
             <div className="p-4 rounded-lg border border-border-dark bg-surface-dark/40">
@@ -309,21 +348,31 @@ export default async function DashboardPage() {
                 Battery SOC
               </p>
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold">88</span>
+                <span className="text-2xl font-bold">
+                  <TankValue vehicle="ucBe" />
+                </span>
                 <span className="text-xs text-slate-500">% Capacity</span>
               </div>
               <div className="mt-2 h-1.5 bg-border-dark rounded-full overflow-hidden">
-                <div className="h-full bg-accent-electric w-[88%]"></div>
+                <ProgressBar
+                  vehicle="ucBe"
+                  kind="soc"
+                  className="h-full bg-accent-electric w-[88%]"
+                />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 rounded-lg border border-border-dark bg-surface-dark/20 text-center">
                 <p className="text-[8px] text-slate-500 uppercase font-bold">Temp</p>
-                <p className="text-lg font-bold">31°C</p>
+                <p className="text-lg font-bold">
+                  <TempValue vehicle="ucBe" />°C
+                </p>
               </div>
               <div className="p-3 rounded-lg border border-border-dark bg-surface-dark/20 text-center">
                 <p className="text-[8px] text-slate-500 uppercase font-bold">Voltage</p>
-                <p className="text-lg font-bold">48.1V</p>
+                <p className="text-lg font-bold">
+                  <VoltageValue vehicle="ucBe" />V
+                </p>
               </div>
             </div>
           </div>
@@ -334,11 +383,11 @@ export default async function DashboardPage() {
             </div>
             <div className="space-y-3">
               <div className="p-2 bg-background-dark/40 rounded border border-border-dark text-[10px] leading-relaxed">
-                <span className="text-accent-electric font-bold">UC-BE:</span> Increase throttle by 5% in Sector 2.
-                Predicted finish: <span className="text-green-500 font-bold">P1</span>.
+                <span className="text-accent-electric font-bold">UC-BE:</span> <MLStrategistText vehicle="ucBe" />
+                Predicted finish: <span className="text-green-500 font-bold"><MLStrategistPrediction /></span>.
               </div>
               <div className="p-2 bg-background-dark/40 rounded border border-border-dark text-[10px] leading-relaxed">
-                <span className="text-accent-hydrogen font-bold">PH-H2:</span> Adjust pressure valve to compensate for Sector 4 gradient.
+                <span className="text-accent-hydrogen font-bold">PH-H2:</span> <MLStrategistText vehicle="phH2" />
               </div>
               <button className="w-full py-2 bg-primary text-[10px] font-bold uppercase rounded hover:bg-primary/80 transition-all">
                 Apply Strategy Overrides
@@ -380,65 +429,26 @@ export default async function DashboardPage() {
               <tr className="text-xs">
                 <td className="px-4 py-3 font-medium">Power Distribution Unit</td>
                 <td className="px-4 py-3 text-accent-electric font-bold">UC-BE</td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-24 h-1 bg-border-dark rounded-full">
-                      <div className="h-full bg-accent-electric w-[78%]"></div>
-                    </div>
-                    <span>78%</span>
-                  </div>
-                </td>
-                <td className="px-4 py-3">
-                  <span className="px-2 py-0.5 bg-primary/20 text-primary rounded text-[10px] font-bold">
-                    OPTIMAL
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-slate-500 font-mono">PDU_48V_0X44</td>
-                <td className="px-4 py-3 text-slate-500 italic">250ms ago</td>
+                <ComponentRow index={0} />
               </tr>
               <tr className="text-xs">
                 <td className="px-4 py-3 font-medium">Fuel Cell Stack B</td>
                 <td className="px-4 py-3 text-accent-hydrogen font-bold">PH-H2</td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-24 h-1 bg-border-dark rounded-full">
-                      <div className="h-full bg-warning w-[42%]"></div>
-                    </div>
-                    <span>42%</span>
-                  </div>
-                </td>
-                <td className="px-4 py-3">
-                  <span className="px-2 py-0.5 bg-warning/20 text-warning rounded text-[10px] font-bold">
-                    WARNING
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-slate-500 font-mono">H2_STCK_0XFA</td>
-                <td className="px-4 py-3 text-slate-500 italic">112ms ago</td>
+                <ComponentRow index={1} />
               </tr>
               <tr className="text-xs">
                 <td className="px-4 py-3 font-medium">Motor Controller</td>
                 <td className="px-4 py-3 text-accent-electric font-bold">UC-BE</td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-24 h-1 bg-border-dark rounded-full">
-                      <div className="h-full bg-accent-electric w-[95%]"></div>
-                    </div>
-                    <span>95%</span>
-                  </div>
-                </td>
-                <td className="px-4 py-3">
-                  <span className="px-2 py-0.5 bg-primary/20 text-primary rounded text-[10px] font-bold">
-                    ACTIVE
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-slate-500 font-mono">MC_PWM_0X12</td>
-                <td className="px-4 py-3 text-slate-500 italic">45ms ago</td>
+                <ComponentRow index={2} />
               </tr>
             </tbody>
           </table>
         </div>
       </footer>
+      <ErrorBanner />
+      <Panels />
     </div>
+    </DashboardLiveProvider>
     </AuthGate>
   );
 }

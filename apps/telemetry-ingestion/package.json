@@ -3,11 +3,15 @@
   "private": true,
   "version": "0.0.0",
   "dependencies": {
-    "@apatte/env": "workspace:*"
+    "@apatte/env": "workspace:*",
+    "@supabase/supabase-js": "^2.49.1",
+    "mqtt": "^5.10.0",
+    "zod": "^3.24.1"
   },
   "scripts": {
-    "dev": "tsx src/validate-env.ts && node ../../scripts/placeholder-task.mjs dev @apatte/telemetry-ingestion",
-    "docker:start": "tsx src/server.ts",
+    "dev": "tsx src/main.ts",
+    "start": "tsx src/main.ts",
+    "docker:start": "tsx src/main.ts",
     "build": "node ../../scripts/placeholder-task.mjs build @apatte/telemetry-ingestion",
     "lint": "node ../../scripts/placeholder-task.mjs lint @apatte/telemetry-ingestion",
     "test": "node ../../scripts/placeholder-task.mjs test @apatte/telemetry-ingestion",

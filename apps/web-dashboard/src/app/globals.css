@@ -15,8 +15,6 @@
 
 body {
   font-family: "Space Grotesk", sans-serif;
-  background: linear-gradient(135deg, #0a0c12 0%, #131620 100%);
-  overflow-x: hidden;
 }
 
 .circuit-bg {
@@ -47,8 +45,8 @@ body {
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
@@ -57,7 +55,7 @@ body {
 
 ::-webkit-scrollbar-thumb {
   background: #1e3b8a;
-  border-radius: 4px;
+  border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
