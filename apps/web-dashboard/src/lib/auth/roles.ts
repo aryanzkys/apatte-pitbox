@@ -13,7 +13,7 @@ export const requiredRolesForPath = (pathname: string): AppRole[] | null => {
 };
 
 export const getCurrentUserRole = async (): Promise<AppRole | null> => {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();

@@ -3,20 +3,22 @@ import { createServerClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { env } from "@/env";
 
-export const getSupabaseServerClient = (): SupabaseClient => {
-  const cookieStore = cookies();
+type CookieOptions = Record<string, unknown>;
+
+export const getSupabaseServerClient = async (): Promise<SupabaseClient> => {
+  const cookieStore = await cookies();
 
   return createServerClient(
     env.NEXT_PUBLIC_SUPABASE_URL,
     env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
       cookies: {
-        get: name => cookieStore.get(name)?.value,
-        set: (name, value, options) => {
-          cookieStore.set({ name, value, ...options });
+        get: (name: string) => cookieStore.get(name)?.value,
+        set: (name: string, value: string, options: CookieOptions) => {
+          cookieStore.set({ name, value, ...(options ?? {}) });
         },
-        remove: (name, options) => {
-          cookieStore.set({ name, value: "", ...options, maxAge: 0 });
+        remove: (name: string, options: CookieOptions) => {
+          cookieStore.set({ name, value: "", ...(options ?? {}), maxAge: 0 });
         }
       }
     }
@@ -24,7 +26,7 @@ export const getSupabaseServerClient = (): SupabaseClient => {
 };
 
 export const getServerUser = async () => {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();

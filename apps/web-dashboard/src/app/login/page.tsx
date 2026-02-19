@@ -277,7 +277,7 @@ export default function LoginPage() {
                   </div>
                   <a
                     className="text-[10px] text-white/40 hover:text-primary transition-colors font-mono"
-                    href="#"
+                    href="/forgot-password"
                   >
                     FORGOT KEY?
                   </a>

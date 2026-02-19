@@ -1,0 +1,16 @@
+[build]
+  base = "apps/web-dashboard"
+  command = "pnpm -w install --frozen-lockfile && pnpm -w --filter @apatte/web-dashboard build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+  PNPM_VERSION = "9"
+  TURBO_TELEMETRY_DISABLED = "1"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[dev]
+  command = "pnpm -w --filter @apatte/web-dashboard dev"
+  targetPort = 3000

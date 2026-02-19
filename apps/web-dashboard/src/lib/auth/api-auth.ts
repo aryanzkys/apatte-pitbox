@@ -20,7 +20,7 @@ export const requireApiUser = async (): Promise<{
   userId: string;
   email: string | null;
 }> => {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();

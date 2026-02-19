@@ -6,7 +6,7 @@ import { isRoleAllowed } from "@/lib/auth/roles";
 export const requireRole = async (
   allowedRoles: AppRole[]
 ): Promise<{ email: string; role: AppRole }> => {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();

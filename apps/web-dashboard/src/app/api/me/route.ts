@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 export async function GET() {
   try {
     const { userId, email } = await requireApiUser();
-    const supabase = getSupabaseServerClient();
+    const supabase = await getSupabaseServerClient();
 
     const { data } = await supabase
       .from("profiles")

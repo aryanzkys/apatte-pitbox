@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 export async function GET() {
   try {
     await requireApiUser();
-    const supabase = getSupabaseServerClient();
+    const supabase = await getSupabaseServerClient();
 
     const { data, error } = await supabase
       .from("telemetry_raw")

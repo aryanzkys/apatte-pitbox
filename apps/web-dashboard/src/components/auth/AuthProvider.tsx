@@ -29,7 +29,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
     });
 
-    const { data: subscription } = supabase.auth.onAuthStateChange(
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange(
       (event, nextSession) => {
         if (event === "SIGNED_OUT") {
           setSession(null);

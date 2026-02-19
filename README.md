@@ -87,3 +87,6 @@ Local equivalents:
 - pnpm lint
 - pnpm typecheck
 - pnpm test
+
+## Deploy to Netlify
+See [docs/netlify-deploy.md](docs/netlify-deploy.md).
