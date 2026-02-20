@@ -5,7 +5,7 @@
 2) Choose this repo.
 3) Build settings (netlify.toml already configured):
    - Base directory: apps/web-dashboard (optional if Netlify reads netlify.toml)
-   - Build command: pnpm -w install --frozen-lockfile && pnpm -w --filter @apatte/web-dashboard build
+  - Build command: pnpm install --frozen-lockfile && pnpm build
    - Publish directory: .next (handled by Next.js plugin)
 
 ## Environment variables

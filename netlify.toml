@@ -1,6 +1,6 @@
 [build]
   base = "apps/web-dashboard"
-  command = "pnpm -w install --frozen-lockfile && pnpm -w --filter @apatte/web-dashboard build"
+  command = "pnpm install --frozen-lockfile && pnpm build"
   publish = ".next"
 
 [build.environment]
