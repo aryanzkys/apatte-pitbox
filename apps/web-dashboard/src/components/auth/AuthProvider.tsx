@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import type { Session, User } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
@@ -15,7 +14,6 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const router = useRouter();
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,7 +34,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (event === "SIGNED_OUT") {
           setSession(null);
           setLoading(false);
-          router.replace("/login");
+          window.location.assign("/login");
           return;
         }
 
@@ -52,7 +50,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (!data.session) {
         setSession(null);
         setLoading(false);
-        router.replace("/login");
+        window.location.assign("/login");
       }
     }, 5 * 60 * 1000);
 
@@ -61,7 +59,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       subscription?.unsubscribe();
       window.clearInterval(intervalId);
     };
-  }, [router, supabase]);
+  }, [supabase]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -71,10 +69,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       signOut: async () => {
         await supabase.auth.signOut();
         setSession(null);
-        router.replace("/login");
+        window.location.assign("/login");
       }
     }),
-    [loading, router, session, supabase]
+    [loading, session, supabase]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

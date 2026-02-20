@@ -18,13 +18,21 @@ export default function GlobalError({
           <div className="text-xs text-white/40 font-mono mb-4">
             {error?.message ?? "Unexpected error"}
           </div>
-          <button
-            type="button"
-            onClick={reset}
-            className="px-4 py-2 bg-primary rounded text-xs font-bold uppercase tracking-widest hover:bg-primary/80"
-          >
-            Retry
-          </button>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={reset}
+              className="px-4 py-2 bg-primary rounded text-xs font-bold uppercase tracking-widest hover:bg-primary/80"
+            >
+              Retry
+            </button>
+            <a
+              href="/login"
+              className="inline-flex px-4 py-2 bg-border-dark rounded text-xs font-bold uppercase tracking-widest hover:bg-primary/40"
+            >
+              Back to Login
+            </a>
+          </div>
         </div>
       </body>
     </html>
