@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html class="dark" lang="id">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Overview | Apatte Pitbox Dashboard</title>
+    
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1e3b8a",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#0a0c12",
+                        "surface-dark": "#131620",
+                        "border-dark": "#282f43",
+                        "accent-hydrogen": "#3b82f6",
+                        "accent-electric": "#10b981",
+                        "accent-shell": "#ef0001",
+                        "critical": "#ef4444",
+                        "warning": "#f59e0b"
+                    },
+                    fontFamily: { "display": ["Space Grotesk", "sans-serif"] }
+                },
+            },
+        }
+    </script>
+    
+    <link rel="stylesheet" href="css/common.css">
+    <style>
+        .grid-bg { background-image: radial-gradient(#282f43 1px, transparent 1px); background-size: 32px 32px; }
+        .map-gradient { background: linear-gradient(to top, #0a0c12 0%, transparent 20%); }
+        
+        .vehicle-card {
+            background: rgba(19, 22, 32, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid #282f43;
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .vehicle-card:hover {
+            border-color: #3b82f6;
+            background: rgba(19, 22, 32, 0.8);
+        }
+        
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        
+        .live-indicator::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+    </style>
+</head>
+
+<body class="bg-background-dark text-white min-h-screen flex flex-col overflow-auto dark">
+    <!-- Header with Navigation -->
+    <header class="border-b border-border-dark bg-surface-dark sticky top-0 z-40">
+        <div class="flex items-center justify-between px-6 py-4">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 bg-gradient-to-br from-accent-hydrogen to-accent-electric rounded-lg flex items-center justify-center font-bold">A</div>
+                <div>
+                    <h1 class="text-xl font-bold">Command Center</h1>
+                    <p class="text-xs text-white/40">Real-time Vehicle Telemetry</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <!-- Navigation Links -->
+                <nav class="flex items-center gap-1">
+                    <a href="overview.html" class="px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-primary/20 transition-all text-accent-hydrogen">📊 Dashboard</a>
+                    <a href="ph-h2.html" class="px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-accent-hydrogen/20 transition-all text-white/80 hover:text-white">🔵 PH-H2</a>
+                    <a href="uc-be.html" class="px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-accent-electric/20 transition-all text-white/80 hover:text-white">🟢 UC-BE</a>
+                    <a href="setting.html" id="settingsLink" class="px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-accent-shell/20 transition-all text-white/80 hover:text-white hidden">⚙️ Settings</a>
+                </nav>
+                
+                <div class="h-5 w-px bg-border-dark/50"></div>
+                
+                <!-- Progress Indicators -->
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[10px] text-white/50 font-medium">H2</span>
+                        <div class="w-16 h-1 bg-black/40 rounded-full overflow-hidden">
+                            <div id="ph2ProgressBar" class="h-full bg-accent-hydrogen rounded-full transition-all" style="width: 68%"></div>
+                        </div>
+                        <span id="ph2ProgressText" class="text-[10px] text-white/50 font-mono w-7">68%</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[10px] text-white/50 font-medium">BE</span>
+                        <div class="w-16 h-1 bg-black/40 rounded-full overflow-hidden">
+                            <div id="ucbeProgressBar" class="h-full bg-accent-electric rounded-full transition-all" style="width: 72%"></div>
+                        </div>
+                        <span id="ucbeProgressText" class="text-[10px] text-white/50 font-mono w-7">72%</span>
+                    </div>
+                </div>
+                
+                <div class="h-5 w-px bg-border-dark/50"></div>
+                
+                <!-- User Info & Controls -->
+                <div class="flex items-center gap-3">
+                    <span id="roleDisplay" class="badge badge-primary text-xs">MANAGER</span>
+                    
+                    <button onclick="handleLogout()" class="p-1.5 hover:bg-surface-dark rounded-lg transition-all">
+                        <span class="material-symbols-outlined text-xl">logout</span>
+                    </button>
+                    
+                    <span id="timeDisplay2" class="text-[10px] text-white/50 font-mono">00:00:00</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6">
+        <div class="grid grid-cols-12 gap-6 h-full">
+            <!-- Left Sidebar - PH-H2 Telemetry -->
+            <div class="col-span-3 space-y-4 overflow-y-auto h-full">
+                <div class="glass-panel p-4 rounded-lg">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm font-bold">PH-H2 HYDROGEN</h3>
+                        <span class="live-indicator" style="color: #3b82f6;">LIVE</span>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="bg-black/40 p-3 rounded-lg">
+                            <div class="text-xs text-white/60 mb-1">Speed</div>
+                            <div class="text-2xl font-bold text-accent-hydrogen" id="ph2Speed">52</div>
+                            <div class="text-xs text-white/40">km/h</div>
+                        </div>
+                        
+                        <div class="bg-black/40 p-3 rounded-lg">
+                            <div class="text-xs text-white/60 mb-1">Efficiency</div>
+                            <div class="text-2xl font-bold text-accent-electric" id="ph2Eff">94.2</div>
+                            <div class="text-xs text-white/40">%</div>
+                        </div>
+                        
+                        <div class="bg-black/40 p-3 rounded-lg">
+                            <div class="text-xs text-white/60 mb-1">H2 Tank</div>
+                            <div class="text-2xl font-bold text-accent-hydrogen" id="ph2Tank">68</div>
+                            <div class="text-xs text-white/40">%</div>
+                        </div>
+                        
+                        <div class="bg-black/40 p-3 rounded-lg">
+                            <div class="text-xs text-white/60 mb-1">Fuel Cell Temp</div>
+                            <div class="text-2xl font-bold" id="ph2Temp">62</div>
+                            <div class="text-xs text-white/40">°C</div>
+                        </div>
+                        
+                        <div class="bg-black/40 p-3 rounded-lg">
+                            <div class="text-xs text-white/60 mb-1">Motor Power</div>
+                            <div class="text-2xl font-bold text-accent-hydrogen" id="ph2Power">42</div>
+                            <div class="text-xs text-white/40">kW</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- PH-H2 ML Insights -->
+                <div class="glass-panel p-4 rounded-lg">
+                    <h3 class="text-sm font-bold mb-3">AI INSIGHTS</h3>
+                    <div class="space-y-2">
+                        <div class="bg-accent-hydrogen/10 border border-accent-hydrogen/30 rounded-lg p-3">
+                            <div class="text-xs font-bold text-accent-hydrogen mb-1">Energy Predictor</div>
+                            <div class="text-xs text-white/80">45.2 km remaining fuel</div>
+                        </div>
+                        <div class="bg-accent-shell/10 border border-accent-shell/30 rounded-lg p-3">
+                            <div class="text-xs font-bold text-accent-shell mb-1">H2 Purge Schedule</div>
+                            <div class="text-xs text-white/80">Purge in 8 minutes</div>
+                        </div>
+                        <div class="bg-accent-electric/10 border border-accent-electric/30 rounded-lg p-3">
+                            <div class="text-xs font-bold text-accent-electric mb-1">Anomaly Detection</div>
+                            <div class="text-xs text-white/80">No anomalies detected</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center - Map & Overview -->
+            <div class="col-span-6 space-y-4 overflow-y-auto h-full">
+                <!-- Map Container -->
+                <div class="glass-panel rounded-lg h-64 grid-bg map-gradient flex items-center justify-center overflow-hidden relative">
+                    <div class="text-center">
+                        <span class="material-symbols-outlined text-6xl text-border-dark/50">location_on</span>
+                        <p class="text-sm text-white/40 mt-2">Brasília Circuit Map</p>
+                        <p class="text-xs text-white/30">Real-time vehicle positions</p>
+                    </div>
+                    
+                    <!-- Circuit markers -->
+                    <div class="absolute top-8 left-8 w-3 h-3 bg-accent-hydrogen rounded-full border-2 border-accent-hydrogen shadow-lg shadow-accent-hydrogen/50"></div>
+                    <div class="absolute bottom-12 right-16 w-3 h-3 bg-accent-electric rounded-full border-2 border-accent-electric shadow-lg shadow-accent-electric/50"></div>
+                </div>
+
+                <!-- Statistics Grid -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="vehicle-card">
+                        <div class="text-xs text-white/60 mb-2">System Status</div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 bg-accent-electric rounded-full animate-pulse"></div>
+                            <span class="font-bold text-accent-electric">ALL SYSTEMS NORMAL</span>
+                        </div>
+                        <div class="text-xs text-white/40 mt-2">14 components active</div>
+                    </div>
+                    
+                    <div class="vehicle-card">
+                        <div class="text-xs text-white/60 mb-2">Race Status</div>
+                        <div class="font-bold text-accent-hydrogen">IN PROGRESS</div>
+                        <div class="text-xs text-white/40 mt-2">Sector 3 / Lap 2</div>
+                    </div>
+                    
+                    <div class="vehicle-card">
+                        <div class="text-xs text-white/60 mb-2">MQTT Connection</div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 bg-accent-electric rounded-full"></div>
+                            <span class="font-bold">CONNECTED</span>
+                        </div>
+                        <div class="text-xs text-white/40 mt-2">Latency: 12ms</div>
+                    </div>
+                    
+                    <div class="vehicle-card">
+                        <div class="text-xs text-white/60 mb-2">Data Packets</div>
+                        <div class="font-bold text-lg font-mono">1.2M+</div>
+                        <div class="text-xs text-white/40 mt-2">Today</div>
+                    </div>
+                </div>
+
+                <!-- Critical Alerts -->
+                <div class="glass-panel p-4 rounded-lg">
+                    <h3 class="text-sm font-bold mb-3 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-warning">warning</span>
+                        Active Alerts
+                    </h3>
+                    <div class="space-y-2 text-xs max-h-32 overflow-y-auto">
+                        <div class="bg-warning/10 border-l-2 border-warning p-2 rounded">⏰ PH-H2: H2 purge due in 8 minutes</div>
+                        <div class="bg-accent-hydrogen/10 border-l-2 border-accent-hydrogen p-2 rounded">ℹ️ UC-BE: Battery efficiency optimal</div>
+                        <div class="bg-accent-electric/10 border-l-2 border-accent-electric p-2 rounded">✓ System: All heartbeats normal</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar - UC-BE Telemetry -->
+            <div class="col-span-3 space-y-4 overflow-y-auto h-full">
+                <div class="glass-panel p-4 rounded-lg">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm font-bold">UC-BE ELECTRIC</h3>
+                        <span class="live-indicator" style="color: #10b981;">LIVE</span>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="bg-black/40 p-3 rounded-lg">
+                            <div class="text-xs text-white/60 mb-1">Speed</div>
+                            <div class="text-2xl font-bold text-accent-electric" id="ucbeSpeed">58</div>
+                            <div class="text-xs text-white/40">km/h</div>
+                        </div>
+                        
+                        <div class="bg-black/40 p-3 rounded-lg">
+                            <div class="text-xs text-white/60 mb-1">Efficiency</div>
+                            <div class="text-2xl font-bold text-accent-electric" id="ucbeEff">96.1</div>
+                            <div class="text-xs text-white/40">%</div>
+                        </div>
+                        
+                        <div class="bg-black/40 p-3 rounded-lg">
+                            <div class="text-xs text-white/60 mb-1">Battery</div>
+                            <div class="text-2xl font-bold text-accent-electric" id="ucbeBattery">72</div>
+                            <div class="text-xs text-white/40">%</div>
+                        </div>
+                        
+                        <div class="bg-black/40 p-3 rounded-lg">
+                            <div class="text-xs text-white/60 mb-1">Motor Temp</div>
+                            <div class="text-2xl font-bold" id="ucbeTemp">55</div>
+                            <div class="text-xs text-white/40">°C</div>
+                        </div>
+                        
+                        <div class="bg-black/40 p-3 rounded-lg">
+                            <div class="text-xs text-white/60 mb-1">Power Consumption</div>
+                            <div class="text-2xl font-bold text-accent-electric" id="ucbePower">28</div>
+                            <div class="text-xs text-white/40">kW</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- UC-BE ML Insights -->
+                <div class="glass-panel p-4 rounded-lg">
+                    <h3 class="text-sm font-bold mb-3">AI INSIGHTS</h3>
+                    <div class="space-y-2">
+                        <div class="bg-accent-electric/10 border border-accent-electric/30 rounded-lg p-3">
+                            <div class="text-xs font-bold text-accent-electric mb-1">Energy Predictor</div>
+                            <div class="text-xs text-white/80">38.5 km remaining charge</div>
+                        </div>
+                        <div class="bg-accent-electric/10 border border-accent-electric/30 rounded-lg p-3">
+                            <div class="text-xs font-bold text-accent-electric mb-1">Efficiency Map</div>
+                            <div class="text-xs text-white/80">Maintain current RPM</div>
+                        </div>
+                        <div class="bg-accent-shell/10 border border-accent-shell/30 rounded-lg p-3">
+                            <div class="text-xs font-bold text-accent-shell mb-1">Fatigue Alert</div>
+                            <div class="text-xs text-white/80">Driver alert level: LOW</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+
+
+    <!-- Scripts -->
+    <script src="js/auth.js"></script>
+    <script src="js/common.js"></script>
+    
+    <script>
+        // Check authorization and set role display
+        const userRole = getUserRole() || 'manager';
+        if (!['admin', 'manager'].includes(userRole)) {
+            window.location.href = 'index.html';
+        }
+        
+        document.getElementById('roleDisplay').textContent = userRole.toUpperCase();
+        
+        // Update telemetry data
+        function updateTelemetry() {
+            const ph2Data = generateTelemetryData('ph-h2');
+            const ucbeData = generateTelemetryData('uc-be');
+            
+            document.getElementById('ph2Speed').textContent = ph2Data.speed;
+            document.getElementById('ph2Eff').textContent = (90 + Math.random() * 8).toFixed(1);
+            document.getElementById('ph2Tank').textContent = (65 + Math.random() * 20).toFixed(0);
+            document.getElementById('ph2Temp').textContent = (60 + Math.random() * 15).toFixed(0);
+            document.getElementById('ph2Power').textContent = ph2Data.power;
+            
+            document.getElementById('ucbeSpeed').textContent = ucbeData.speed;
+            document.getElementById('ucbeEff').textContent = (92 + Math.random() * 7).toFixed(1);
+            document.getElementById('ucbeBattery').textContent = (70 + Math.random() * 20).toFixed(0);
+            document.getElementById('ucbeTemp').textContent = (50 + Math.random() * 20).toFixed(0);
+            document.getElementById('ucbePower').textContent = ucbeData.power;
+        }
+        
+        updateTelemetry();
+        setInterval(updateTelemetry, 2000);
+        
+        // Update time in header
+        function updateTime() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('timeDisplay2').textContent = time;
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+        
+        // Update progress bars in navbar
+        function updateProgressBars() {
+            const ph2Progress = Math.floor(Math.random() * 30) + 60; // 60-90%
+            const ucbeProgress = Math.floor(Math.random() * 30) + 60; // 60-90%
+            
+            document.getElementById('ph2ProgressBar').style.width = ph2Progress + '%';
+            document.getElementById('ph2ProgressText').textContent = ph2Progress + '%';
+            document.getElementById('ucbeProgressBar').style.width = ucbeProgress + '%';
+            document.getElementById('ucbeProgressText').textContent = ucbeProgress + '%';
+        }
+        updateProgressBars();
+        setInterval(updateProgressBars, 3000);
+        
+        // Show settings link for admin
+        if (userRole === 'admin') {
+            document.getElementById('settingsLink').classList.remove('hidden');
+        }
+        
+        setPageTitle('Command Center', userRole);
+    </script>
+</body>
+</html>

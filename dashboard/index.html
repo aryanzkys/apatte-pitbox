@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html class="dark" lang="id">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Login | Apatte Pitbox Dashboard</title>
+    
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1e3b8a",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#0a0c12",
+                        "surface-dark": "#131620",
+                        "border-dark": "#282f43",
+                        "accent-hydrogen": "#3b82f6",
+                        "accent-electric": "#10b981",
+                        "accent-shell": "#ef0001",
+                        "critical": "#ef4444",
+                        "warning": "#f59e0b"
+                    },
+                    fontFamily: { "display": ["Space Grotesk", "sans-serif"] }
+                },
+            },
+        }
+    </script>
+    
+    <link rel="stylesheet" href="css/common.css">
+    <style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: linear-gradient(135deg, #0a0c12 0%, #131620 100%);
+            overflow-x: hidden;
+        }
+        
+        .circuit-bg {
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
+        }
+        
+        .glass-card {
+            background: rgba(19, 22, 32, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid #282f43;
+        }
+        
+        .logo-container {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 24px;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen w-screen flex items-center justify-center p-4 dark">
+    <main class="circuit-bg w-full h-full flex flex-col items-center justify-center gap-8">
+        <div class="w-full max-w-md">
+            <!-- Header Logo & Title -->
+            <div class="flex flex-col items-center gap-4 mb-10">
+                <div class="logo-container">
+                    <span class="text-white">⚡</span>
+                </div>
+                <div class="text-center">
+                    <h1 class="text-3xl font-bold text-white mb-2">APATTE PITBOX</h1>
+                    <p class="text-white/60 text-sm tracking-widest uppercase">Shell Eco-Marathon</p>
+                </div>
+            </div>
+
+            <!-- Login Card -->
+            <div class="glass-card rounded-2xl p-8 space-y-6">
+                <div class="text-center mb-6">
+                    <h2 class="text-xl font-bold text-white mb-1">Telemetry Dashboard</h2>
+                    <p class="text-white/40 text-xs font-mono">Role-based Access Control</p>
+                </div>
+
+                <!-- Form -->
+                <div class="space-y-4">
+                    <!-- Username -->
+                    <div class="space-y-2">
+                        <label class="text-white/60 text-xs font-bold tracking-widest uppercase">Engineer ID</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white/30">person</span>
+                            <input 
+                                class="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/10 rounded-lg text-white focus:outline-none focus:border-accent-hydrogen focus:ring-2 focus:ring-accent-hydrogen/50 transition-all font-mono placeholder:text-white/10" 
+                                placeholder="Input Username" 
+                                type="text" 
+                                id="username"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="space-y-2">
+                        <label class="text-white/60 text-xs font-bold tracking-widest uppercase">Security Token</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white/30">lock</span>
+                            <input 
+                                class="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/10 rounded-lg text-white focus:outline-none focus:border-accent-hydrogen focus:ring-2 focus:ring-accent-hydrogen/50 transition-all font-mono placeholder:text-white/10" 
+                                placeholder="Input Password" 
+                                type="password" 
+                                id="password"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Test Accounts Info -->
+                    <div class="bg-accent-shell/10 border border-accent-shell/30 rounded-lg p-3 mt-4">
+                        <div class="text-xs font-bold text-accent-shell mb-2">📋 Test Accounts (Development):</div>
+                        <div class="text-xs text-white/80 space-y-1 font-mono">
+                            <div>• budi / password123 → Admin</div>
+                            <div>• siti / password123 → Manager</div>
+                            <div>• rudi / password123 → PH-H2 Team</div>
+                            <div>• andi / password123 → UC-BE Team</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="space-y-3">
+                    <button 
+                        type="button" 
+                        onclick="handleLogin()" 
+                        class="w-full py-3 bg-accent-shell hover:bg-red-700 text-white font-bold tracking-widest rounded-lg transition-all flex items-center justify-center gap-2 group"
+                    >
+                        <span class="material-symbols-outlined text-lg">login</span>
+                        <span>LOGIN</span>
+                    </button>
+                    
+                    <div class="flex items-center justify-between px-1">
+                        <div class="flex items-center gap-2">
+                            <div class="w-2 h-2 rounded-full bg-accent-electric animate-pulse shadow-lg"></div>
+                            <span class="text-xs text-white/40 font-mono">BACKEND CONNECTED</span>
+                        </div>
+                        <a class="text-xs text-white/40 hover:text-primary transition-colors font-mono" href="#">HELP</a>
+                    </div>
+                </div>
+
+                <!-- Divider -->
+                <div class="h-px bg-gradient-to-r from-transparent via-primary to-transparent opacity-30"></div>
+            </div>
+
+            <!-- Footer -->
+            <p class="text-white/20 text-xs text-center mt-8 tracking-widest font-mono">
+                APATTE TELEMETRY SYSTEM | SHELL ECO-MARATHON 2026
+            </p>
+        </div>
+    </main>
+
+    <!-- System Footer Status -->
+    <footer class="fixed bottom-0 left-0 right-0 bg-black/60 backdrop-blur-md border-t border-white/5 py-2 px-6 flex items-center justify-between z-20">
+        <div class="flex items-center gap-8">
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-white/40 font-mono tracking-tight">MQTT:</span>
+                <div class="w-2 h-2 rounded-full bg-accent-electric"></div>
+                <span class="text-xs text-white/80 font-mono">CONNECTED</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-white/40 font-mono tracking-tight">SYSTEM:</span>
+                <span class="text-xs text-accent-hydrogen font-mono">READY</span>
+            </div>
+        </div>
+        <div class="text-xs text-white/40 font-mono">
+            <span id="timeDisplay"></span>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/auth.js"></script>
+    <script src="js/common.js"></script>
+    
+    <script>
+        // Update time display
+        function updateTime() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('timeDisplay').textContent = time;
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+        
+        // Set page title
+        setPageTitle('Login - Pitbox Dashboard');
+    </script>
+</body>
+</html>

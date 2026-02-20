@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html class="dark" lang="id">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>PH-H2 Telemetry | Apatte Dashboard</title>
+    
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1e3b8a",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#0a0c12",
+                        "surface-dark": "#131620",
+                        "border-dark": "#282f43",
+                        "accent-hydrogen": "#3b82f6",
+                        "accent-electric": "#10b981",
+                        "accent-shell": "#ef0001",
+                        "critical": "#ef4444",
+                        "warning": "#f59e0b"
+                    },
+                    fontFamily: { "display": ["Space Grotesk", "sans-serif"] }
+                },
+            },
+        }
+    </script>
+    
+    <link rel="stylesheet" href="css/common.css">
+</head>
+
+<body class="bg-background-dark text-white min-h-screen flex flex-col dark">
+    <!-- Header with Navigation -->
+    <header class="border-b border-border-dark bg-surface-dark sticky top-0 z-40">
+        <div class="flex items-center justify-between px-6 py-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-accent-hydrogen to-blue-900 rounded-lg flex items-center justify-center font-bold text-lg">H₂</div>
+                <div>
+                    <h1 class="text-xl font-bold text-accent-hydrogen">PH-H2 HYDROGEN</h1>
+                    <p class="text-xs text-white/40">Fuel Cell Vehicle Telemetry</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <!-- Navigation Links -->
+                <nav class="flex items-center gap-1">
+                    <a href="overview.html" class="px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-primary/20 transition-all text-white/80 hover:text-white">📊 Dashboard</a>
+                    <a href="ph-h2.html" class="px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-accent-hydrogen/20 transition-all text-accent-hydrogen">🔵 PH-H2</a>
+                    <a href="uc-be.html" class="px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-accent-electric/20 transition-all text-white/80 hover:text-white">🟢 UC-BE</a>
+                    <a href="setting.html" id="settingsLink" class="px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-accent-shell/20 transition-all text-white/80 hover:text-white hidden">⚙️ Settings</a>
+                </nav>
+                
+                <div class="h-5 w-px bg-border-dark/50"></div>
+                
+                <!-- Status & Controls -->
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-accent-electric animate-pulse"></div>
+                        <span class="text-xs font-mono text-accent-electric">LIVE</span>
+                    </div>
+                    
+                    <button onclick="handleLogout()" class="p-1.5 hover:bg-surface-dark rounded-lg transition-all">
+                        <span class="material-symbols-outlined text-xl">logout</span>
+                    </button>
+                    
+                    <span id="timeDisplay" class="text-[10px] text-white/50 font-mono">00:00:00</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-auto">
+        <div class="p-4 space-y-4">
+            <!-- Status Cards Grid -->
+            <div class="grid grid-cols-4 gap-3">
+                <div class="glass-panel p-4 rounded-lg">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm text-white/60 uppercase">Speed</h3>
+                        <span class="material-symbols-outlined text-accent-hydrogen">speed</span>
+                    </div>
+                    <div class="text-3xl font-bold text-accent-hydrogen" id="speed">0</div>
+                    <div class="text-xs text-white/40 mt-2">km/h</div>
+                </div>
+                
+                <div class="glass-panel p-4 rounded-lg">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm text-white/60 uppercase">Efficiency</h3>
+                        <span class="material-symbols-outlined text-accent-electric">trending_up</span>
+                    </div>
+                    <div class="text-3xl font-bold text-accent-electric" id="efficiency">0</div>
+                    <div class="text-xs text-white/40 mt-2">%</div>
+                </div>
+                
+                <div class="glass-panel p-4 rounded-lg">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm text-white/60 uppercase">H2 Tank</h3>
+                        <span class="material-symbols-outlined text-accent-hydrogen">local_gas_station</span>
+                    </div>
+                    <div class="text-3xl font-bold text-accent-hydrogen" id="tank">0</div>
+                    <div class="text-xs text-white/40 mt-2">%</div>
+                </div>
+                
+                <div class="glass-panel p-4 rounded-lg">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm text-white/60 uppercase">Fuel Cell Temp</h3>
+                        <span class="material-symbols-outlined text-warning">thermostat</span>
+                    </div>
+                    <div class="text-3xl font-bold" id="temp">0</div>
+                    <div class="text-xs text-white/40 mt-2">°C</div>
+                </div>
+            </div>
+
+            <!-- Detailed Metrics -->
+            <div class="grid grid-cols-3 gap-3">
+                <!-- System Status -->
+                <div class="glass-panel p-4 rounded-lg">
+                    <h3 class="text-lg font-bold mb-3 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-accent-hydrogen">settings</span>
+                        System Status
+                    </h3>
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-white/60">Motor RPM</span>
+                            <span class="font-mono font-bold" id="rpm">0</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-white/60">Motor Power</span>
+                            <span class="font-mono font-bold text-accent-hydrogen" id="power">0 kW</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-white/60">Stack Voltage</span>
+                            <span class="font-mono font-bold text-accent-hydrogen" id="voltage">0 V</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-white/60">Stack Current</span>
+                            <span class="font-mono font-bold text-accent-hydrogen" id="current">0 A</span>
+                        </div>
+                        <div class="h-px bg-border-dark my-2"></div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-2 h-2 rounded-full bg-accent-electric"></div>
+                            <span class="text-xs text-white/60">All systems nominal</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sector Performance -->
+                <div class="glass-panel p-4 rounded-lg">
+                    <h3 class="text-lg font-bold mb-3 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-accent-hydrogen">timeline</span>
+                        Sector Performance
+                    </h3>
+                    <div class="space-y-2">
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-sm">S1</span>
+                                <span class="text-sm font-mono">92%</span>
+                            </div>
+                            <div class="w-full h-2 bg-black/40 rounded-full overflow-hidden">
+                                <div class="h-full bg-accent-hydrogen rounded-full" style="width: 92%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-sm">S2</span>
+                                <span class="text-sm font-mono">88%</span>
+                            </div>
+                            <div class="w-full h-2 bg-black/40 rounded-full overflow-hidden">
+                                <div class="h-full bg-accent-hydrogen rounded-full" style="width: 88%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-sm">S3</span>
+                                <span class="text-sm font-mono">85%</span>
+                            </div>
+                            <div class="w-full h-2 bg-black/40 rounded-full overflow-hidden">
+                                <div class="h-full bg-accent-hydrogen rounded-full" style="width: 85%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-sm">S4</span>
+                                <span class="text-sm font-mono">90%</span>
+                            </div>
+                            <div class="w-full h-2 bg-black/40 rounded-full overflow-hidden">
+                                <div class="h-full bg-accent-hydrogen rounded-full" style="width: 90%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-sm">S5</span>
+                                <span class="text-sm font-mono">91%</span>
+                            </div>
+                            <div class="w-full h-2 bg-black/40 rounded-full overflow-hidden">
+                                <div class="h-full bg-accent-hydrogen rounded-full" style="width: 91%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Features -->
+                <div class="glass-panel p-4 rounded-lg">
+                    <h3 class="text-lg font-bold mb-3 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-accent-hydrogen">smart_toy</span>
+                        AI Features
+                    </h3>
+                    <div class="space-y-2">
+                        <div class="bg-accent-hydrogen/10 border border-accent-hydrogen/30 rounded-lg p-3">
+                            <div class="text-xs font-bold text-accent-hydrogen mb-1">Energy Predictor</div>
+                            <div class="text-xs text-white/80">44.7 km fuel remaining</div>
+                        </div>
+                        <div class="bg-accent-hydrogen/10 border border-accent-hydrogen/30 rounded-lg p-3">
+                            <div class="text-xs font-bold text-accent-hydrogen mb-1">H2 Purge Schedule</div>
+                            <div class="text-xs text-white/80">Purge in 6 minutes</div>
+                        </div>
+                        <div class="bg-accent-electric/10 border border-accent-electric/30 rounded-lg p-3">
+                            <div class="text-xs font-bold text-accent-electric mb-1">Anomaly Detection</div>
+                            <div class="text-xs text-white/80">✓ No anomalies</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alert Banner -->
+            <div class="alert alert-warning">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined">info</span>
+                    <div>
+                        <div class="font-bold text-sm">H2 Purge Scheduler Active</div>
+                        <div class="text-xs mt-1">Execute H2 purge procedure in 6 minutes to maintain fuel cell efficiency</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-time Data Stream -->
+            <div class="glass-panel p-6 rounded-lg">
+                <h3 class="text-lg font-bold mb-4">Live Data Stream</h3>
+                <div class="font-mono text-xs space-y-1 max-h-32 overflow-y-auto">
+                    <div class="text-white/60">[14:25:38] Speed updated: <span class="text-accent-hydrogen">52.3 km/h</span></div>
+                    <div class="text-white/60">[14:25:37] Tank level: <span class="text-accent-hydrogen">68.5%</span></div>
+                    <div class="text-white/60">[14:25:36] Efficiency: <span class="text-accent-electric">94.2%</span></div>
+                    <div class="text-white/60">[14:25:35] Motor temp: <span class="text-warning">62.1°C</span></div>
+                    <div class="text-white/60">[14:25:34] Motor power: <span class="text-accent-hydrogen">42.5 kW</span></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+
+
+    <!-- Scripts -->
+    <script src="js/auth.js"></script>
+    <script src="js/common.js"></script>
+    
+    <script>
+        // Check authorization
+        const userRole = getUserRole() || 'ph-h2';
+        if (!['admin', 'manager', 'ph-h2'].includes(userRole)) {
+            window.location.href = 'index.html';
+        }
+
+        // Update telemetry
+        function updateTelemetry() {
+            const data = generateTelemetryData('ph-h2');
+            
+            document.getElementById('speed').textContent = (40 + Math.random() * 30).toFixed(1);
+            document.getElementById('efficiency').textContent = (90 + Math.random() * 8).toFixed(1);
+            document.getElementById('tank').textContent = (65 + Math.random() * 20).toFixed(0);
+            document.getElementById('temp').textContent = (60 + Math.random() * 15).toFixed(1);
+            
+            document.getElementById('rpm').textContent = (Math.random() * 3500).toFixed(0);
+            document.getElementById('power').textContent = (30 + Math.random() * 50).toFixed(1) + ' kW';
+            document.getElementById('voltage').textContent = (450 + Math.random() * 50).toFixed(1) + ' V';
+            document.getElementById('current').textContent = (80 + Math.random() * 120).toFixed(1) + ' A';
+        }
+        
+        updateTelemetry();
+        setInterval(updateTelemetry, 1500);
+        
+        // Update time in header
+        function updateTime() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('timeDisplay').textContent = time;
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+        
+        // Show settings link for admin
+        if (userRole === 'admin') {
+            document.getElementById('settingsLink').classList.remove('hidden');
+        }
+        
+        setPageTitle('PH-H2 Telemetry', userRole);
+    </script>
+</body>
+</html>

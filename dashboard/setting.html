@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html class="dark" lang="id">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Settings | Apatte Admin Panel</title>
+    
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1e3b8a",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#0a0c12",
+                        "surface-dark": "#131620",
+                        "border-dark": "#282f43",
+                        "accent-hydrogen": "#3b82f6",
+                        "accent-electric": "#10b981",
+                        "accent-shell": "#ef0001",
+                        "critical": "#ef4444",
+                        "warning": "#f59e0b"
+                    },
+                    fontFamily: { "display": ["Space Grotesk", "sans-serif"] }
+                },
+            },
+        }
+    </script>
+    
+    <link rel="stylesheet" href="css/common.css">
+    <style>
+        .tab-button {
+            padding: 12px 24px;
+            background-color: transparent;
+            border-bottom: 2px solid transparent;
+            color: rgba(255, 255, 255, 0.6);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .tab-button.active {
+            border-bottom-color: #ef0001;
+            color: white;
+        }
+        
+        .tab-button:hover {
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+    </style>
+</head>
+
+<body class="bg-background-dark text-white min-h-screen flex flex-col dark">
+    <!-- Header with Navigation -->
+    <header class="border-b border-border-dark bg-surface-dark sticky top-0 z-40">
+        <div class="flex items-center justify-between px-6 py-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-accent-shell to-red-900 rounded-lg flex items-center justify-center font-bold text-lg">⚙️</div>
+                <div>
+                    <h1 class="text-xl font-bold text-accent-shell">ADMIN PANEL</h1>
+                    <p class="text-xs text-white/40">System Configuration & Management</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <!-- Navigation Links -->
+                <nav class="flex items-center gap-1">
+                    <a href="overview.html" class="px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-primary/20 transition-all text-white/80 hover:text-white">📊 Dashboard</a>
+                    <a href="ph-h2.html" class="px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-accent-hydrogen/20 transition-all text-white/80 hover:text-white">🔵 PH-H2</a>
+                    <a href="uc-be.html" class="px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-accent-electric/20 transition-all text-white/80 hover:text-white">🟢 UC-BE</a>
+                    <a href="setting.html" class="px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-accent-shell/20 transition-all text-accent-shell">⚙️ Settings</a>
+                </nav>
+                
+                <div class="h-5 w-px bg-border-dark/50"></div>
+                
+                <!-- Status & Controls -->
+                <div class="flex items-center gap-3">
+                    <span class="badge badge-primary">ADMIN</span>
+                    
+                    <button onclick="handleLogout()" class="p-1.5 hover:bg-surface-dark rounded-lg transition-all">
+                        <span class="material-symbols-outlined text-xl">logout</span>
+                    </button>
+                    
+                    <span id="timeDisplay" class="text-[10px] text-white/50 font-mono">00:00:00</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===== MODAL SYSTEM ===== -->
+    <!-- Modal Overlay -->
+    <div id="modalOverlay" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center transition-opacity duration-300"></div>
+
+    <!-- Add Vehicle Modal -->
+    <div id="addVehicleModal" class="hidden fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+        <div class="glass-panel rounded-2xl p-8 w-96 pointer-events-auto shadow-2xl border border-primary/30" style="background: rgba(19, 22, 32, 0.95);">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-accent-hydrogen/20 rounded-lg flex items-center justify-center">
+                        <span class="material-symbols-outlined text-accent-hydrogen">directions_car</span>
+                    </div>
+                    <h2 class="text-xl font-bold">Add Vehicle</h2>
+                </div>
+                <button onclick="closeModal('addVehicleModal')" class="p-2 hover:bg-white/10 rounded-lg transition-all">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <form id="addVehicleForm" class="space-y-4">
+                <div>
+                    <label class="text-sm text-white/60 mb-2 block">Vehicle ID</label>
+                    <input type="text" id="vehicleId" placeholder="e.g., VH-001" class="w-full px-4 py-2 bg-black/40 border border-border-dark rounded-lg text-white focus:border-accent-hydrogen focus:outline-none" required />
+                </div>
+                <div>
+                    <label class="text-sm text-white/60 mb-2 block">Vehicle Name</label>
+                    <input type="text" id="vehicleName" placeholder="e.g., Prototype H2" class="w-full px-4 py-2 bg-black/40 border border-border-dark rounded-lg text-white focus:border-accent-hydrogen focus:outline-none" required />
+                </div>
+                <div>
+                    <label class="text-sm text-white/60 mb-2 block">Vehicle Type</label>
+                    <select id="vehicleType" class="w-full px-4 py-2 bg-black/40 border border-border-dark rounded-lg text-white focus:border-accent-hydrogen focus:outline-none">
+                        <option value="H2">Hydrogen (H2)</option>
+                        <option value="BEV">Battery Electric (BEV)</option>
+                    </select>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" class="flex-1 px-4 py-2 bg-accent-hydrogen hover:bg-blue-600 text-white rounded-lg font-medium transition-all">
+                        <span class="flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined">add</span>
+                            Add Vehicle
+                        </span>
+                    </button>
+                    <button type="button" onclick="closeModal('addVehicleModal')" class="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium transition-all">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div id="addUserModal" class="hidden fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+        <div class="glass-panel rounded-2xl p-8 w-96 pointer-events-auto shadow-2xl border border-accent-electric/30" style="background: rgba(19, 22, 32, 0.95);">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-accent-electric/20 rounded-lg flex items-center justify-center">
+                        <span class="material-symbols-outlined text-accent-electric">person_add</span>
+                    </div>
+                    <h2 class="text-xl font-bold">Add User</h2>
+                </div>
+                <button onclick="closeModal('addUserModal')" class="p-2 hover:bg-white/10 rounded-lg transition-all">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <form id="addUserForm" class="space-y-4">
+                <div>
+                    <label class="text-sm text-white/60 mb-2 block">Engineer ID</label>
+                    <input type="text" id="userId" placeholder="e.g., ENG005" class="w-full px-4 py-2 bg-black/40 border border-border-dark rounded-lg text-white focus:border-accent-electric focus:outline-none" required />
+                </div>
+                <div>
+                    <label class="text-sm text-white/60 mb-2 block">Full Name</label>
+                    <input type="text" id="userName" placeholder="e.g., John Doe" class="w-full px-4 py-2 bg-black/40 border border-border-dark rounded-lg text-white focus:border-accent-electric focus:outline-none" required />
+                </div>
+                <div>
+                    <label class="text-sm text-white/60 mb-2 block">Role</label>
+                    <select id="userRole" class="w-full px-4 py-2 bg-black/40 border border-border-dark rounded-lg text-white focus:border-accent-electric focus:outline-none">
+                        <option value="admin">Admin</option>
+                        <option value="manager">Manager</option>
+                        <option value="ph-h2">PH-H2 Team</option>
+                        <option value="uc-be">UC-BE Team</option>
+                    </select>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" class="flex-1 px-4 py-2 bg-accent-electric hover:bg-green-600 text-white rounded-lg font-medium transition-all">
+                        <span class="flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined">add</span>
+                            Add User
+                        </span>
+                    </button>
+                    <button type="button" onclick="closeModal('addUserModal')" class="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium transition-all">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Vehicle Modal -->
+    <div id="editVehicleModal" class="hidden fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+        <div class="glass-panel rounded-2xl p-8 w-96 pointer-events-auto shadow-2xl border border-primary/30" style="background: rgba(19, 22, 32, 0.95);">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-accent-hydrogen/20 rounded-lg flex items-center justify-center">
+                        <span class="material-symbols-outlined text-accent-hydrogen">directions_car</span>
+                    </div>
+                    <h2 class="text-xl font-bold">Edit Vehicle</h2>
+                </div>
+                <button onclick="closeModal('editVehicleModal')" class="p-2 hover:bg-white/10 rounded-lg transition-all">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <form id="editVehicleForm" class="space-y-4">
+                <div>
+                    <label class="text-sm text-white/60 mb-2 block">Vehicle Name</label>
+                    <input type="text" id="editVehicleName" placeholder="e.g., Prototype H2" class="w-full px-4 py-2 bg-black/40 border border-border-dark rounded-lg text-white focus:border-accent-hydrogen focus:outline-none" required />
+                </div>
+                <div>
+                    <label class="text-sm text-white/60 mb-2 block">Team</label>
+                    <input type="text" id="editVehicleTeam" placeholder="e.g., Apatte Racing" class="w-full px-4 py-2 bg-black/40 border border-border-dark rounded-lg text-white focus:border-accent-hydrogen focus:outline-none" required />
+                </div>
+                <div>
+                    <label class="text-sm text-white/60 mb-2 block">Status</label>
+                    <select id="editVehicleStatus" class="w-full px-4 py-2 bg-black/40 border border-border-dark rounded-lg text-white focus:border-accent-hydrogen focus:outline-none">
+                        <option value="ACTIVE">ACTIVE</option>
+                        <option value="MAINTENANCE">MAINTENANCE</option>
+                        <option value="INACTIVE">INACTIVE</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-sm text-white/60 mb-2 block">Fuel Type</label>
+                    <select id="editVehicleType" class="w-full px-4 py-2 bg-black/40 border border-border-dark rounded-lg text-white focus:border-accent-hydrogen focus:outline-none">
+                        <option value="H2">Hydrogen (H2)</option>
+                        <option value="BEV">Battery Electric (BEV)</option>
+                    </select>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" class="flex-1 px-4 py-2 bg-accent-hydrogen hover:bg-blue-600 text-white rounded-lg font-medium transition-all">
+                        <span class="flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined">check</span>
+                            Save Changes
+                        </span>
+                    </button>
+                    <button type="button" onclick="closeModal('editVehicleModal')" class="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium transition-all">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Item Modal -->
+    <div id="editItemModal" class="hidden fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+        <div class="glass-panel rounded-2xl p-8 w-96 pointer-events-auto shadow-2xl border border-primary/30" style="background: rgba(19, 22, 32, 0.95);">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
+                        <span class="material-symbols-outlined text-primary">edit</span>
+                    </div>
+                    <h2 class="text-xl font-bold" id="editModalTitle">Edit Item</h2>
+                </div>
+                <button onclick="closeModal('editItemModal')" class="p-2 hover:bg-white/10 rounded-lg transition-all">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <form id="editItemForm" class="space-y-4">
+                <div id="editFormContent"></div>
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" class="flex-1 px-4 py-2 bg-primary hover:bg-blue-700 text-white rounded-lg font-medium transition-all">
+                        <span class="flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined">check</span>
+                            Save Changes
+                        </span>
+                    </button>
+                    <button type="button" onclick="closeModal('editItemModal')" class="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium transition-all">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirm Action Modal -->
+    <div id="confirmModal" class="hidden fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+        <div class="glass-panel rounded-2xl p-8 w-96 pointer-events-auto shadow-2xl border border-warning/30" style="background: rgba(19, 22, 32, 0.95);">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 bg-warning/20 rounded-lg flex items-center justify-center">
+                    <span class="material-symbols-outlined text-warning">warning</span>
+                </div>
+                <h2 class="text-xl font-bold" id="confirmTitle">Confirm Action</h2>
+            </div>
+
+            <p id="confirmMessage" class="text-white/80 mb-6"></p>
+
+            <div class="flex gap-3">
+                <button id="confirmActionBtn" type="button" class="flex-1 px-4 py-2 bg-critical hover:bg-red-700 text-white rounded-lg font-medium transition-all">
+                    Confirm
+                </button>
+                <button id="cancelActionBtn" type="button" onclick="closeModal('confirmModal')" class="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium transition-all">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="border-b border-border-dark bg-surface-dark/60 sticky top-16 z-30">
+        <div class="px-6 flex items-center gap-4 overflow-x-auto">
+            <button class="tab-button active" data-tab="ml-config">ML Model Settings</button>
+            <button class="tab-button" data-tab="thresholds">Threshold Config</button>
+            <button class="tab-button" data-tab="vehicles">Vehicle Management</button>
+            <button class="tab-button" data-tab="users">User Roles</button>
+            <button class="tab-button" data-tab="system">System Health</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-auto">
+        <div class="p-6 max-w-7xl mx-auto">
+            <!-- ML CONFIG TAB -->
+            <div class="tab-content active" id="ml-config">
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold">Machine Learning Configuration</h2>
+                        <button class="btn btn-shell">💾 Save Changes</button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-6">
+                        <!-- Energy Predictor -->
+                        <div class="glass-panel p-6 rounded-lg">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-bold">Energy Predictor</h3>
+                                <span class="badge badge-primary">ENABLED</span>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-sm text-white/60 mb-2 block">Learning Rate</label>
+                                    <input type="range" min="0.001" max="0.1" step="0.001" value="0.005" class="w-full" />
+                                    <div class="text-xs text-white/40 mt-1">Current: 0.005</div>
+                                </div>
+                                <div>
+                                    <label class="text-sm text-white/60 mb-2 block">Model Version</label>
+                                    <select class="w-full px-3 py-2 bg-black/40 border border-border-dark rounded text-sm">
+                                        <option selected>v2.3 (Current)</option>
+                                        <option>v2.2</option>
+                                        <option>v2.1</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-primary w-full text-sm">Retrain Model</button>
+                            </div>
+                        </div>
+
+                        <!-- Racing Line Optimizer -->
+                        <div class="glass-panel p-6 rounded-lg">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-bold">Racing Line Optimizer</h3>
+                                <span class="badge badge-primary">ENABLED</span>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-sm text-white/60 mb-2 block">Precision Level</label>
+                                    <input type="range" min="0" max="100" step="5" value="85" class="w-full" />
+                                    <div class="text-xs text-white/40 mt-1">Current: 85%</div>
+                                </div>
+                                <div>
+                                    <label class="text-sm text-white/60 mb-2 block">Update Frequency</label>
+                                    <select class="w-full px-3 py-2 bg-black/40 border border-border-dark rounded text-sm">
+                                        <option>Every 100ms</option>
+                                        <option selected>Every 500ms</option>
+                                        <option>Every 1000ms</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-primary w-full text-sm">Calibrate Track</button>
+                            </div>
+                        </div>
+
+                        <!-- H2 Purge Scheduler -->
+                        <div class="glass-panel p-6 rounded-lg">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-bold">H2 Purge Scheduler</h3>
+                                <span class="badge badge-primary">ENABLED</span>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-sm text-white/60 mb-2 block">Purge Interval (min)</label>
+                                    <input type="number" value="15" min="5" max="60" class="w-full px-3 py-2 bg-black/40 border border-border-dark rounded text-sm" />
+                                </div>
+                                <div>
+                                    <label class="text-sm text-white/60 mb-2 block">Purge Duration (sec)</label>
+                                    <input type="number" value="30" min="10" max="120" class="w-full px-3 py-2 bg-black/40 border border-border-dark rounded text-sm" />
+                                </div>
+                                <button class="btn btn-shell w-full text-sm">Manual Trigger Purge</button>
+                            </div>
+                        </div>
+
+                        <!-- Fatigue Detector -->
+                        <div class="glass-panel p-6 rounded-lg">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-bold">Driver Fatigue Detector</h3>
+                                <span class="badge badge-primary">ENABLED</span>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-sm text-white/60 mb-2 block">Sensitivity (0-100)</label>
+                                    <input type="range" min="0" max="100" step="5" value="70" class="w-full" />
+                                    <div class="text-xs text-white/40 mt-1">Current: 70 (High)</div>
+                                </div>
+                                <div>
+                                    <label class="flex items-center gap-2 text-sm">
+                                        <input type="checkbox" checked class="w-4 h-4" />
+                                        Enable Audio Alerts
+                                    </label>
+                                </div>
+                                <button class="btn btn-primary w-full text-sm">Test Alert</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- THRESHOLDS TAB -->
+            <div class="tab-content" id="thresholds">
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold">Threshold Configuration</h2>
+                        <button class="btn btn-shell">💾 Save Thresholds</button>
+                    </div>
+
+                    <!-- PH-H2 Thresholds -->
+                    <div class="glass-panel p-6 rounded-lg">
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-accent-hydrogen">directions_car</span>
+                            PH-H2 Hydrogen Vehicle Thresholds
+                        </h3>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label class="text-sm text-white/60 mb-2 block">H2 Tank Low Warning (%)</label>
+                                <input type="number" value="30" min="0" max="100" class="w-full px-3 py-2 bg-black/40 border border-border-dark rounded" />
+                            </div>
+                            <div>
+                                <label class="text-sm text-white/60 mb-2 block">Fuel Cell Temp Critical (°C)</label>
+                                <input type="number" value="85" min="0" max="150" class="w-full px-3 py-2 bg-black/40 border border-border-dark rounded" />
+                            </div>
+                            <div>
+                                <label class="text-sm text-white/60 mb-2 block">Efficiency Min (%)</label>
+                                <input type="number" value="75" min="0" max="100" class="w-full px-3 py-2 bg-black/40 border border-border-dark rounded" />
+                            </div>
+                            <div>
+                                <label class="text-sm text-white/60 mb-2 block">Motor RPM Max</label>
+                                <input type="number" value="4000" min="1000" max="10000" class="w-full px-3 py-2 bg-black/40 border border-border-dark rounded" />
+                            </div>
+                            <div>
+                                <label class="text-sm text-white/60 mb-2 block">Power Output Max (kW)</label>
+                                <input type="number" value="100" min="10" max="500" class="w-full px-3 py-2 bg-black/40 border border-border-dark rounded" />
+                            </div>
+                            <div>
+                                <label class="text-sm text-white/60 mb-2 block">Stack Voltage Min (V)</label>
+                                <input type="number" value="200" min="100" max="500" class="w-full px-3 py-2 bg-black/40 border border-border-dark rounded" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- UC-BE Thresholds -->
+                    <div class="glass-panel p-6 rounded-lg">
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-accent-electric">electric_car</span>
+                            UC-BE Electric Vehicle Thresholds
+                        </h3>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label class="text-sm text-white/60 mb-2 block">Battery Low Warning (%)</label>
+                                <input type="number" value="25" min="0" max="100" class="w-full px-3 py-2 bg-black/40 border border-border-dark rounded" />
+                            </div>
+                            <div>
+                                <label class="text-sm text-white/60 mb-2 block">Motor Temp Critical (°C)</label>
+                                <input type="number" value="95" min="0" max="150" class="w-full px-3 py-2 bg-black/40 border border-border-dark rounded" />
+                            </div>
+                            <div>
+                                <label class="text-sm text-white/60 mb-2 block">Efficiency Min (%)</label>
+                                <input type="number" value="80" min="0" max="100" class="w-full px-3 py-2 bg-black/40 border border-border-dark rounded" />
+                            </div>
+                            <div>
+                                <label class="text-sm text-white/60 mb-2 block">Motor RPM Max</label>
+                                <input type="number" value="5000" min="1000" max="10000" class="w-full px-3 py-2 bg-black/40 border border-border-dark rounded" />
+                            </div>
+                            <div>
+                                <label class="text-sm text-white/60 mb-2 block">HV Battery Max Temp (°C)</label>
+                                <input type="number" value="50" min="20" max="100" class="w-full px-3 py-2 bg-black/40 border border-border-dark rounded" />
+                            </div>
+                            <div>
+                                <label class="text-sm text-white/60 mb-2 block">Max Current Draw (A)</label>
+                                <input type="number" value="200" min="50" max="500" class="w-full px-3 py-2 bg-black/40 border border-border-dark rounded" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VEHICLES TAB -->
+            <div class="tab-content" id="vehicles">
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold">Vehicle Management</h2>
+                        <button class="btn btn-shell">➕ Add Vehicle</button>
+                    </div>
+
+                    <!-- PH-H2 Vehicle -->
+                    <div class="glass-panel p-6 rounded-lg">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 bg-accent-hydrogen/10 rounded-lg flex items-center justify-center text-2xl">H₂</div>
+                                <div>
+                                    <h3 class="text-lg font-bold">PH-H2 Hydrogen</h3>
+                                    <p class="text-xs text-white/60">Prototype Hydrogen Vehicle</p>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary text-sm" onclick="editVehicle('PH-H2-001')">Edit</button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-border-dark">
+                            <div>
+                                <span class="text-xs text-white/60">Vehicle ID:</span>
+                                <p class="font-mono">PH-H2-001</p>
+                            </div>
+                            <div>
+                                <span class="text-xs text-white/60">Team:</span>
+                                <p>Apatte Racing</p>
+                            </div>
+                            <div>
+                                <span class="text-xs text-white/60">Fuel Type:</span>
+                                <p>Hydrogen (Compressed H2)</p>
+                            </div>
+                            <div>
+                                <span class="text-xs text-white/60">Status:</span>
+                                <p><span class="badge badge-success">ACTIVE</span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- UC-BE Vehicle -->
+                    <div class="glass-panel p-6 rounded-lg">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 bg-accent-electric/10 rounded-lg flex items-center justify-center text-2xl">⚡</div>
+                                <div>
+                                    <h3 class="text-lg font-bold">UC-BE Electric</h3>
+                                    <p class="text-xs text-white/60">Urban Concept Battery Electric</p>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary text-sm" onclick="editVehicle('UC-BE-001')">Edit</button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-border-dark">
+                            <div>
+                                <span class="text-xs text-white/60">Vehicle ID:</span>
+                                <p class="font-mono">UC-BE-001</p>
+                            </div>
+                            <div>
+                                <span class="text-xs text-white/60">Team:</span>
+                                <p>Apatte Racing</p>
+                            </div>
+                            <div>
+                                <span class="text-xs text-white/60">Fuel Type:</span>
+                                <p>Battery Electric (BEV)</p>
+                            </div>
+                            <div>
+                                <span class="text-xs text-white/60">Status:</span>
+                                <p><span class="badge badge-success">ACTIVE</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- USERS TAB -->
+            <div class="tab-content" id="users">
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold">User Role Management</h2>
+                        <button class="btn btn-shell">➕ Add User</button>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-lg overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-border-dark">
+                                    <th class="text-left py-3 px-4 text-white/60">Engineer ID</th>
+                                    <th class="text-left py-3 px-4 text-white/60">Name</th>
+                                    <th class="text-left py-3 px-4 text-white/60">Role</th>
+                                    <th class="text-left py-3 px-4 text-white/60">Vehicle Access</th>
+                                    <th class="text-left py-3 px-4 text-white/60">Status</th>
+                                    <th class="text-left py-3 px-4 text-white/60">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-border-dark/50 hover:bg-black/20">
+                                    <td class="py-3 px-4">ENG001</td>
+                                    <td class="py-3 px-4">Budi Admin</td>
+                                    <td class="py-3 px-4"><span class="badge badge-primary">ADMIN</span></td>
+                                    <td class="py-3 px-4">All Vehicles</td>
+                                    <td class="py-3 px-4"><span class="badge badge-success">ACTIVE</span></td>
+                                    <td class="py-3 px-4"><button class="text-primary hover:text-blue-400">Edit</button></td>
+                                </tr>
+                                <tr class="border-b border-border-dark/50 hover:bg-black/20">
+                                    <td class="py-3 px-4">ENG002</td>
+                                    <td class="py-3 px-4">Siti Manager</td>
+                                    <td class="py-3 px-4"><span class="badge badge-success">MANAGER</span></td>
+                                    <td class="py-3 px-4">All Vehicles</td>
+                                    <td class="py-3 px-4"><span class="badge badge-success">ACTIVE</span></td>
+                                    <td class="py-3 px-4"><button class="text-primary hover:text-blue-400">Edit</button></td>
+                                </tr>
+                                <tr class="border-b border-border-dark/50 hover:bg-black/20">
+                                    <td class="py-3 px-4">ENG003</td>
+                                    <td class="py-3 px-4">Rudi H2 Team</td>
+                                    <td class="py-3 px-4"><span class="text-accent-hydrogen">PH-H2 TEAM</span></td>
+                                    <td class="py-3 px-4">PH-H2 Only</td>
+                                    <td class="py-3 px-4"><span class="badge badge-success">ACTIVE</span></td>
+                                    <td class="py-3 px-4"><button class="text-primary hover:text-blue-400">Edit</button></td>
+                                </tr>
+                                <tr class="hover:bg-black/20">
+                                    <td class="py-3 px-4">ENG004</td>
+                                    <td class="py-3 px-4">Andi E-Team</td>
+                                    <td class="py-3 px-4"><span class="text-accent-electric">UC-BE TEAM</span></td>
+                                    <td class="py-3 px-4">UC-BE Only</td>
+                                    <td class="py-3 px-4"><span class="badge badge-success">ACTIVE</span></td>
+                                    <td class="py-3 px-4"><button class="text-primary hover:text-blue-400">Edit</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SYSTEM HEALTH TAB -->
+            <div class="tab-content" id="system">
+                <div class="space-y-6">
+                    <h2 class="text-2xl font-bold">System Health & Status</h2>
+
+                    <div class="grid grid-cols-4 gap-4">
+                        <div class="glass-panel p-4 rounded-lg">
+                            <div class="text-xs text-white/60 mb-2">MQTT Broker</div>
+                            <div class="text-sm font-bold text-accent-electric flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full bg-accent-electric"></div>
+                                CONNECTED
+                            </div>
+                            <div class="text-xs text-white/40 mt-2">Latency: 12ms</div>
+                        </div>
+                        
+                        <div class="glass-panel p-4 rounded-lg">
+                            <div class="text-xs text-white/60 mb-2">Database</div>
+                            <div class="text-sm font-bold text-accent-electric flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full bg-accent-electric"></div>
+                                HEALTHY
+                            </div>
+                            <div class="text-xs text-white/40 mt-2">Uptime: 99.9%</div>
+                        </div>
+                        
+                        <div class="glass-panel p-4 rounded-lg">
+                            <div class="text-xs text-white/60 mb-2">API Services</div>
+                            <div class="text-sm font-bold text-accent-electric flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full bg-accent-electric"></div>
+                                RUNNING
+                            </div>
+                            <div class="text-xs text-white/40 mt-2">Response: 45ms</div>
+                        </div>
+                        
+                        <div class="glass-panel p-4 rounded-lg">
+                            <div class="text-xs text-white/60 mb-2">Disk Usage</div>
+                            <div class="text-sm font-bold">42.5 GB</div>
+                            <div class="text-xs text-white/40 mt-2">Available: 57.5%</div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-lg">
+                        <h3 class="text-lg font-bold mb-4">System Logs</h3>
+                        <div class="bg-black/40 p-4 rounded font-mono text-xs max-h-60 overflow-y-auto space-y-2">
+                            <div class="text-accent-electric">[14:25:38] ✓ Telemetry data synced - 1.2M packets</div>
+                            <div class="text-accent-electric">[14:25:20] ✓ ML models updated successfully</div>
+                            <div class="text-warning">[14:25:05] ⚠️ High memory usage detected (78%)</div>
+                            <div class="text-accent-electric">[14:24:50] ✓ Database backup completed</div>
+                            <div class="text-accent-electric">[14:24:32] ✓ All threshold checks passed</div>
+                            <div class="text-accent-electric">[14:24:10] ✓ Vehicle telemetry streams active</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+
+
+    <!-- Scripts -->
+    <script src="js/auth.js"></script>
+    <script src="js/common.js"></script>
+    
+    <script>
+        // Check authorization
+        const userRole = getUserRole() || 'admin';
+        if (userRole !== 'admin') {
+            window.location.href = 'index.html';
+        }
+
+        // Tab switching
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const tabId = button.dataset.tab;
+                
+                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                button.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // ===== DATA MANAGEMENT =====
+        const appData = {
+            mlConfig: {
+                energyPredictor: { lr: 0.005, version: 'v2.3' },
+                racingLine: { precision: 85, frequency: 500 },
+                h2Purge: { interval: 15, duration: 30 },
+                fatigue: { sensitivity: 70, audioAlert: true }
+            },
+            thresholds: {
+                'ph-h2': {
+                    h2TankLow: 30, fuelCellTemp: 85, efficiencyMin: 75,
+                    motorRPMMax: 4000, powerMax: 100, stackVoltageMin: 200
+                },
+                'uc-be': {
+                    batteryLow: 25, motorTempCrit: 95, efficiencyMin: 80,
+                    motorRPMMax: 5000, batteryMaxTemp: 50, maxCurrent: 200
+                }
+            },
+            vehicles: [
+                { id: 'PH-H2-001', name: 'PH-H2 Hydrogen', type: 'H2', team: 'Apatte Racing', status: 'ACTIVE' },
+                { id: 'UC-BE-001', name: 'UC-BE Electric', type: 'BEV', team: 'Apatte Racing', status: 'ACTIVE' }
+            ],
+            users: [
+                { id: 'ENG001', name: 'Budi Admin', role: 'admin', access: 'All Vehicles', status: 'ACTIVE' },
+                { id: 'ENG002', name: 'Siti Manager', role: 'manager', access: 'All Vehicles', status: 'ACTIVE' },
+                { id: 'ENG003', name: 'Rudi H2 Team', role: 'ph-h2', access: 'PH-H2 Only', status: 'ACTIVE' },
+                { id: 'ENG004', name: 'Andi E-Team', role: 'uc-be', access: 'UC-BE Only', status: 'ACTIVE' }
+            ]
+        };
+
+        function loadAppData() {
+            const saved = localStorage.getItem('appSettings');
+            if (saved) {
+                Object.assign(appData, JSON.parse(saved));
+            }
+        }
+
+        function saveAppData() {
+            localStorage.setItem('appSettings', JSON.stringify(appData));
+        }
+
+        loadAppData();
+
+        // ===== MODAL SYSTEM =====
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            const overlay = document.getElementById('modalOverlay');
+            if (modal && overlay) {
+                modal.classList.remove('hidden');
+                overlay.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+                const firstInput = modal.querySelector('input, select, textarea');
+                if (firstInput) setTimeout(() => firstInput.focus(), 100);
+            }
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            const overlay = document.getElementById('modalOverlay');
+            if (modal) {
+                modal.classList.add('hidden');
+                const anyOpen = document.querySelectorAll('[id$="Modal"]:not(.hidden)').length > 0;
+                if (!anyOpen && overlay) overlay.classList.add('hidden');
+                if (!anyOpen) document.body.style.overflow = '';
+            }
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target.id === 'modalOverlay') {
+                document.querySelectorAll('[id$="Modal"]:not(.hidden)').forEach(modal => {
+                    modal.classList.add('hidden');
+                });
+                document.getElementById('modalOverlay').classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+        });
+
+        // Close modal with ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('[id$="Modal"]:not(.hidden)').forEach(modal => {
+                    modal.classList.add('hidden');
+                });
+                document.getElementById('modalOverlay').classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+        });
+
+        // ===== MODAL EVENT HANDLERS =====
+        // Add Vehicle Modal
+        const addVehicleForm = document.getElementById('addVehicleForm');
+        if (addVehicleForm) {
+            addVehicleForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const vehicleId = document.getElementById('vehicleId')?.value?.trim();
+                const vehicleName = document.getElementById('vehicleName')?.value?.trim();
+                const vehicleType = document.getElementById('vehicleType')?.value?.trim();
+
+                if (!vehicleId || !vehicleName || !vehicleType) {
+                    showNotification('Please fill all fields!', 'error');
+                    return;
+                }
+
+                appData.vehicles.push({ 
+                    id: vehicleId, 
+                    name: vehicleName, 
+                    type: vehicleType, 
+                    team: 'Apatte Racing', 
+                    status: 'ACTIVE' 
+                });
+                saveAppData();
+                refreshVehiclesList();
+                closeModal('addVehicleModal');
+                addVehicleForm.reset();
+                showNotification(`✓ Vehicle "${vehicleName}" added!`, 'success');
+            });
+        }
+
+        // Add User Modal
+        const addUserForm = document.getElementById('addUserForm');
+        const addUserFormDefaultHandler = function(e) {
+            e.preventDefault();
+            
+            const userId = document.getElementById('userId')?.value?.trim();
+            const userName = document.getElementById('userName')?.value?.trim();
+            const userRole = document.getElementById('userRole')?.value?.trim();
+
+            if (!userId || !userName || !userRole) {
+                showNotification('Please fill all fields!', 'error');
+                return;
+            }
+
+            // Check if user already exists
+            if (appData.users.some(u => u.id === userId)) {
+                showNotification('User ID already exists!', 'error');
+                return;
+            }
+
+            const access = userRole === 'admin' || userRole === 'manager' ? 'All Vehicles' : 
+                          (userRole === 'ph-h2' ? 'PH-H2 Only' : 'UC-BE Only');
+            
+            appData.users.push({ 
+                id: userId, 
+                name: userName, 
+                role: userRole, 
+                access: access, 
+                status: 'ACTIVE' 
+            });
+            saveAppData();
+            refreshUsersList();
+            closeModal('addUserModal');
+            addUserForm.reset();
+            showNotification(`✓ User "${userName}" added!`, 'success');
+        };
+        
+        if (addUserForm) {
+            addUserForm.addEventListener('submit', addUserFormDefaultHandler);
+        }
+
+        // ===== BUTTON EVENT HANDLERS =====
+        document.querySelectorAll('button').forEach(button => {
+            const text = button.textContent.trim();
+            
+            if (button.classList.contains('tab-button')) return;
+            
+            const isActionButton = text.includes('Save') || text.includes('Retrain') || 
+                                  text.includes('Calibrate') || text.includes('Trigger') || 
+                                  text.includes('Test') || text.includes('Add') ||
+                                  text.includes('Edit') || text.includes('Delete') || 
+                                  text.includes('Remove') || text.includes('Reset');
+            
+            if (isActionButton) {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleButtonAction(text, this);
+                });
+            }
+        });
+
+        function handleButtonAction(buttonText, element) {
+            let action = '';
+            
+            if (buttonText.includes('Save Changes')) action = 'saveMlConfig';
+            else if (buttonText.includes('Save Thresholds')) action = 'saveThresholds';
+            else if (buttonText.includes('Retrain')) action = 'retrainModel';
+            else if (buttonText.includes('Calibrate')) action = 'calibrateTrack';
+            else if (buttonText.includes('Trigger')) action = 'triggerPurge';
+            else if (buttonText.includes('Test Alert')) action = 'testAlert';
+            else if (buttonText.includes('Add Vehicle')) action = 'addVehicle';
+            else if (buttonText.includes('Add User')) action = 'addUser';
+            else if (buttonText.includes('Edit')) action = 'editItem';
+            else if (buttonText.includes('Delete') || buttonText.includes('Remove')) action = 'deleteItem';
+            else if (buttonText.includes('Reset')) action = 'resetSettings';
+            
+            if (action) performAction(action, element);
+        }
+
+        function performAction(action, element) {
+            switch(action) {
+                case 'saveMlConfig': saveMlConfiguration(); break;
+                case 'saveThresholds': saveThresholdConfiguration(); break;
+                case 'retrainModel': retrainEnergyPredictor(); break;
+                case 'calibrateTrack': calibrateRacingLine(); break;
+                case 'triggerPurge': triggerH2Purge(); break;
+                case 'testAlert': testFatigueAlert(); break;
+                case 'addVehicle': openModal('addVehicleModal'); break;
+                case 'addUser': openModal('addUserModal'); break;
+                case 'editItem': editItem(element); break;
+                case 'deleteItem': deleteItem(element); break;
+                case 'resetSettings': resetAllSettings(); break;
+            }
+        }
+
+        // ===== ML CONFIG =====
+        function saveMlConfiguration() {
+            const ranges = document.querySelectorAll('#ml-config input[type="range"]');
+            const selects = document.querySelectorAll('#ml-config select');
+            const numbers = document.querySelectorAll('#ml-config input[type="number"]');
+            const checkbox = document.querySelector('#ml-config input[type="checkbox"]');
+
+            appData.mlConfig = {
+                energyPredictor: { lr: parseFloat(ranges[0]?.value) || 0.005, version: selects[0]?.value || 'v2.3' },
+                racingLine: { precision: parseInt(ranges[1]?.value) || 85, frequency: parseInt(selects[1]?.value) || 500 },
+                h2Purge: { interval: parseInt(numbers[0]?.value) || 15, duration: parseInt(numbers[1]?.value) || 30 },
+                fatigue: { sensitivity: parseInt(ranges[2]?.value) || 70, audioAlert: checkbox?.checked ?? true }
+            };
+
+            saveAppData();
+            showNotification('✓ ML Configuration saved!', 'success');
+        }
+
+        // ===== THRESHOLDS =====
+        function saveThresholdConfiguration() {
+            const inputs = document.querySelectorAll('#thresholds input[type="number"]');
+            
+            if (inputs.length >= 12) {
+                appData.thresholds['ph-h2'] = {
+                    h2TankLow: parseInt(inputs[0]?.value) || 30,
+                    fuelCellTemp: parseInt(inputs[1]?.value) || 85,
+                    efficiencyMin: parseInt(inputs[2]?.value) || 75,
+                    motorRPMMax: parseInt(inputs[3]?.value) || 4000,
+                    powerMax: parseInt(inputs[4]?.value) || 100,
+                    stackVoltageMin: parseInt(inputs[5]?.value) || 200
+                };
+                appData.thresholds['uc-be'] = {
+                    batteryLow: parseInt(inputs[6]?.value) || 25,
+                    motorTempCrit: parseInt(inputs[7]?.value) || 95,
+                    efficiencyMin: parseInt(inputs[8]?.value) || 80,
+                    motorRPMMax: parseInt(inputs[9]?.value) || 5000,
+                    batteryMaxTemp: parseInt(inputs[10]?.value) || 50,
+                    maxCurrent: parseInt(inputs[11]?.value) || 200
+                };
+            }
+
+            saveAppData();
+            showNotification('✓ Threshold Configuration saved!', 'success');
+        }
+
+        // ===== MODEL TRAINING =====
+        function retrainEnergyPredictor() {
+            showNotification('⏳ Retraining Energy Predictor Model...', 'info');
+            setTimeout(() => {
+                showNotification('✓ Model retrained! Accuracy: 94.2%', 'success');
+            }, 2000);
+        }
+
+        function calibrateRacingLine() {
+            showNotification('⏳ Calibrating Racing Line Optimizer...', 'info');
+            setTimeout(() => {
+                showNotification('✓ Track calibration complete! 156 waypoints', 'success');
+            }, 2000);
+        }
+
+        function triggerH2Purge() {
+            showNotification('⏳ Triggering H2 Purge cycle...', 'info');
+            setTimeout(() => {
+                showNotification('✓ H2 Purge completed!', 'success');
+            }, 1500);
+        }
+
+        function testFatigueAlert() {
+            showNotification('⏳ Testing Fatigue Alert...', 'info');
+            setTimeout(() => {
+                showNotification('✓ Fatigue alert test passed!', 'success');
+            }, 1000);
+        }
+
+        // ===== VEHICLES =====
+        function addVehicleModal() {
+            openModal('addVehicleModal');
+        }
+
+        function editVehicle(vehicleId) {
+            const vehicle = appData.vehicles.find(v => v.id === vehicleId);
+            if (!vehicle) return;
+            
+            // Populate form
+            document.getElementById('editVehicleName').value = vehicle.name;
+            document.getElementById('editVehicleTeam').value = vehicle.team;
+            document.getElementById('editVehicleStatus').value = vehicle.status;
+            document.getElementById('editVehicleType').value = vehicle.type;
+            
+            // Setup form submission
+            const editVehicleForm = document.getElementById('editVehicleForm');
+            editVehicleForm.onsubmit = function(e) {
+                e.preventDefault();
+                
+                const newName = document.getElementById('editVehicleName').value.trim();
+                const newTeam = document.getElementById('editVehicleTeam').value.trim();
+                const newStatus = document.getElementById('editVehicleStatus').value;
+                const newType = document.getElementById('editVehicleType').value;
+                
+                if (!newName || !newTeam) {
+                    showNotification('Please fill all fields!', 'error');
+                    return;
+                }
+                
+                vehicle.name = newName;
+                vehicle.team = newTeam;
+                vehicle.status = newStatus;
+                vehicle.type = newType;
+                
+                saveAppData();
+                refreshVehiclesList();
+                closeModal('editVehicleModal');
+                editVehicleForm.onsubmit = null;
+                showNotification(`✓ Vehicle "${newName}" updated!`, 'success');
+            };
+            
+            openModal('editVehicleModal');
+        }
+
+        function deleteVehicle(vehicleId) {
+            const vehicle = appData.vehicles.find(v => v.id === vehicleId);
+            if (!vehicle) return;
+            
+            showConfirmModal(`Delete vehicle "${vehicle.name}"?`, () => {
+                appData.vehicles = appData.vehicles.filter(v => v.id !== vehicleId);
+                saveAppData();
+                refreshVehiclesList();
+                showNotification(`✓ Vehicle "${vehicle.name}" deleted!`, 'success');
+            });
+        }
+
+        function refreshVehiclesList() {
+            const container = document.getElementById('vehicles')?.querySelector('.space-y-6');
+            if (!container) return;
+            
+            // Clear existing vehicles (but keep the Add button)
+            const panels = container.querySelectorAll('.glass-panel');
+            panels.forEach(panel => panel.remove());
+            
+            // Rebuild vehicle list
+            appData.vehicles.forEach(v => {
+                const vehiclePanel = document.createElement('div');
+                vehiclePanel.className = 'glass-panel p-6 rounded-lg';
+                const badgeColor = v.status === 'ACTIVE' ? 'badge-success' : (v.status === 'MAINTENANCE' ? 'badge-warning' : 'badge-critical');
+                vehiclePanel.innerHTML = `
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-${v.type === 'H2' ? 'accent-hydrogen' : 'accent-electric'}/10 rounded-lg flex items-center justify-center text-2xl">
+                                ${v.type === 'H2' ? 'H₂' : '⚡'}
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold">${v.name}</h3>
+                                <p class="text-xs text-white/60">${v.type === 'H2' ? 'Hydrogen Vehicle' : 'Electric Vehicle'}</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="btn btn-primary text-sm" onclick="editVehicle('${v.id}')">Edit</button>
+                            <button class="btn btn-critical text-sm" onclick="deleteVehicle('${v.id}')">Delete</button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-border-dark">
+                        <div>
+                            <span class="text-xs text-white/60">Vehicle ID:</span>
+                            <p class="font-mono">${v.id}</p>
+                        </div>
+                        <div>
+                            <span class="text-xs text-white/60">Team:</span>
+                            <p>${v.team}</p>
+                        </div>
+                        <div>
+                            <span class="text-xs text-white/60">Fuel Type:</span>
+                            <p>${v.type === 'H2' ? 'Hydrogen (Compressed H2)' : 'Battery Electric (BEV)'}</p>
+                        </div>
+                        <div>
+                            <span class="text-xs text-white/60">Status:</span>
+                            <p><span class="badge ${badgeColor}">${v.status}</span></p>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(vehiclePanel);
+            });
+        }
+
+        // ===== USERS =====
+        function addUserModal() {
+            openModal('addUserModal');
+        }
+
+        function refreshUsersList() {
+            const tbody = document.querySelector('#users tbody');
+            if (!tbody) return;
+            
+            tbody.innerHTML = '';
+            appData.users.forEach(u => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-border-dark/50 hover:bg-black/20';
+                tr.innerHTML = `
+                    <td class="py-3 px-4">${u.id}</td>
+                    <td class="py-3 px-4">${u.name}</td>
+                    <td class="py-3 px-4"><span class="badge badge-${u.role === 'admin' ? 'primary' : 'success'}">${u.role.toUpperCase()}</span></td>
+                    <td class="py-3 px-4">${u.access}</td>
+                    <td class="py-3 px-4"><span class="badge badge-success">ACTIVE</span></td>
+                    <td class="py-3 px-4 flex gap-2"><button class="text-primary hover:text-blue-400" onclick="event.stopPropagation(); editUser('${u.id}')">Edit</button><button class="text-critical hover:text-red-400" onclick="event.stopPropagation(); deleteUser('${u.id}')">Delete</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function editUser(id) {
+            const user = appData.users.find(u => u.id === id);
+            if (!user) return;
+            
+            // Change modal context to edit mode
+            const modalTitle = document.querySelector('#addUserModal .text-xl.font-bold');
+            const submitBtn = document.querySelector('#addUserForm button[type="submit"]');
+            
+            if (modalTitle) modalTitle.textContent = 'Update User';
+            if (submitBtn) {
+                submitBtn.innerHTML = `<span class="flex items-center justify-center gap-2"><span class="material-symbols-outlined">check</span>Update User</span>`;
+            }
+            
+            // Populate form with user data
+            document.getElementById('userId').value = user.id;
+            document.getElementById('userId').disabled = true;
+            document.getElementById('userName').value = user.name;
+            document.getElementById('userRole').value = user.role;
+            
+            // Update handler
+            const addUserForm = document.getElementById('addUserForm');
+            
+            function handleEditSubmit(e) {
+                e.preventDefault();
+                const newName = document.getElementById('userName').value.trim();
+                const newRole = document.getElementById('userRole').value;
+                
+                if (!newName) {
+                    showNotification('Please fill all fields!', 'error');
+                    return;
+                }
+                
+                user.name = newName;
+                user.role = newRole;
+                const newAccess = newRole === 'admin' || newRole === 'manager' ? 'All Vehicles' : 
+                                (newRole === 'ph-h2' ? 'PH-H2 Only' : 'UC-BE Only');
+                user.access = newAccess;
+                
+                saveAppData();
+                refreshUsersList();
+                
+                // Remove edit handler and restore default
+                addUserForm.removeEventListener('submit', handleEditSubmit);
+                addUserForm.addEventListener('submit', addUserFormDefaultHandler);
+                
+                // Reset form to add mode
+                document.getElementById('userId').disabled = false;
+                document.getElementById('userId').value = '';
+                document.getElementById('userName').value = '';
+                document.getElementById('userRole').value = 'manager';
+                modalTitle.textContent = 'Add User';
+                submitBtn.innerHTML = `<span class="flex items-center justify-center gap-2"><span class="material-symbols-outlined">add</span>Add User</span>`;
+                
+                closeModal('addUserModal');
+                showNotification('✓ User updated!', 'success');
+            }
+            
+            // Remove default listener and add edit listener
+            addUserForm.removeEventListener('submit', addUserFormDefaultHandler);
+            addUserForm.addEventListener('submit', handleEditSubmit);
+            
+            openModal('addUserModal');
+        }
+
+        function deleteUser(userId) {
+            const user = appData.users.find(u => u.id === userId);
+            if (!user) return;
+            
+            showConfirmModal(`Delete user "${user.name}"?`, () => {
+                appData.users = appData.users.filter(u => u.id !== userId);
+                saveAppData();
+                refreshUsersList();
+                showNotification(`✓ User "${user.name}" deleted!`, 'success');
+            });
+        }
+
+        function editItem(element) {
+            const row = element.closest('tr') || element.closest('.glass-panel');
+            if (row?.querySelector('.text-lg.font-bold')) {
+                const currentText = row.querySelector('.text-lg.font-bold')?.textContent;
+                showConfirmModal('Edit this item?', () => {
+                    showNotification('✓ Item updated!', 'success');
+                });
+            }
+        }
+
+        function deleteItem(element) {
+            const row = element.closest('tr');
+            const vehiclePanel = element.closest('.glass-panel');
+            
+            showConfirmModal('Delete this item?', () => {
+                if (row) {
+                    const userId = row.querySelector('td')?.textContent;
+                    appData.users = appData.users.filter(u => u.id !== userId);
+                    saveAppData();
+                    refreshUsersList();
+                }
+                showNotification('✓ Item deleted!', 'success');
+            });
+        }
+
+        function showConfirmModal(message, callback) {
+            const confirmModal = document.getElementById('confirmModal');
+            const confirm = document.getElementById('confirmActionBtn');
+            const cancel = document.getElementById('cancelActionBtn');
+            
+            if (confirmModal && confirm && cancel) {
+                confirmModal.dataset.callback = callback;
+                openModal('confirmModal');
+                
+                confirm.onclick = () => {
+                    if (typeof callback === 'function') callback();
+                    closeModal('confirmModal');
+                };
+                
+                cancel.onclick = () => closeModal('confirmModal');
+            }
+        }
+
+        function resetAllSettings() {
+            showConfirmModal('Reset all settings to defaults?', () => {
+                localStorage.removeItem('appSettings');
+                location.reload();
+            });
+        }
+
+        // ===== UPDATE TIME =====
+        function updateTime() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('timeDisplay').textContent = time;
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+        
+        // Initialize
+        refreshVehiclesList();
+        refreshUsersList();
+        setPageTitle('Admin Settings', userRole);
+    </script>
+</body>
+</html>
