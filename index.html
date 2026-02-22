@@ -36,14 +36,65 @@
     <style>
         body {
             font-family: 'Space Grotesk', sans-serif;
-            background: linear-gradient(135deg, #0a0c12 0%, #131620 100%);
+            background:
+                radial-gradient(circle at 15% 20%, rgba(59, 130, 246, 0.18) 0%, transparent 35%),
+                radial-gradient(circle at 85% 80%, rgba(16, 185, 129, 0.14) 0%, transparent 40%),
+                linear-gradient(140deg, #06080f 0%, #0d1220 48%, #111827 100%);
             overflow-x: hidden;
         }
         
         .circuit-bg {
+            position: relative;
+            overflow: hidden;
+            isolation: isolate;
             background-image: 
                 radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
                 radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
+        }
+
+        .circuit-bg::before {
+            content: "";
+            position: absolute;
+            inset: -20%;
+            background:
+                radial-gradient(circle at 25% 35%, rgba(59, 130, 246, 0.16), transparent 35%),
+                radial-gradient(circle at 70% 65%, rgba(16, 185, 129, 0.12), transparent 40%);
+            filter: blur(40px);
+            animation: bgFloat 14s ease-in-out infinite alternate;
+            z-index: -2;
+        }
+
+        .circuit-bg::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(40, 47, 67, 0.15) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(40, 47, 67, 0.15) 1px, transparent 1px);
+            background-size: 28px 28px;
+            mask-image: radial-gradient(circle at 50% 45%, rgba(0, 0, 0, 0.9), transparent 75%);
+            -webkit-mask-image: radial-gradient(circle at 50% 45%, rgba(0, 0, 0, 0.9), transparent 75%);
+            animation: gridShift 24s linear infinite;
+            z-index: -1;
+            opacity: 0.35;
+        }
+
+        @keyframes bgFloat {
+            0% {
+                transform: translate(-2%, -1%) scale(1);
+            }
+            100% {
+                transform: translate(2%, 1%) scale(1.06);
+            }
+        }
+
+        @keyframes gridShift {
+            0% {
+                transform: translateY(0);
+            }
+            100% {
+                transform: translateY(28px);
+            }
         }
         
         .glass-card {
@@ -55,24 +106,36 @@
         .logo-container {
             width: 60px;
             height: 60px;
-            background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
+            background: rgba(19, 22, 32, 0.8);
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 700;
-            font-size: 24px;
+            border: 1px solid #282f43;
+            overflow: hidden;
+        }
+
+        .logo-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 6px;
         }
     </style>
 </head>
 
-<body class="min-h-screen w-screen flex items-center justify-center p-4 dark">
+<body class="app-page-bg min-h-screen w-screen flex items-center justify-center p-4 dark">
+    <!-- Fullscreen Toggle Button (Login Page) -->
+    <button onclick="displayMode.toggle()" class="fixed top-4 right-4 p-2 hover:bg-surface-dark rounded-lg transition-all z-50" title="Toggle Fullscreen Mode">
+        <span class="material-symbols-outlined text-xl text-white/60 hover:text-white">fullscreen</span>
+    </button>
+    
     <main class="circuit-bg w-full h-full flex flex-col items-center justify-center gap-8">
         <div class="w-full max-w-md">
             <!-- Header Logo & Title -->
             <div class="flex flex-col items-center gap-4 mb-10">
                 <div class="logo-container">
-                    <span class="text-white">⚡</span>
+                    <img src="./logos/apatte62-logo.png" alt="Apatte 62 Logo" class="logo-image" />
                 </div>
                 <div class="text-center">
                     <h1 class="text-3xl font-bold text-white mb-2">APATTE PITBOX</h1>
@@ -99,6 +162,7 @@
                                 placeholder="Input Username" 
                                 type="text" 
                                 id="username"
+                                autocomplete="username"
                             />
                         </div>
                     </div>
@@ -113,6 +177,7 @@
                                 placeholder="Input Password" 
                                 type="password" 
                                 id="password"
+                                autocomplete="current-password"
                             />
                         </div>
                     </div>
@@ -191,6 +256,26 @@
         }
         updateTime();
         setInterval(updateTime, 1000);
+
+        // Enter key flow: username -> password -> login
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+
+        if (usernameInput && passwordInput) {
+            usernameInput.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    passwordInput.focus();
+                }
+            });
+
+            passwordInput.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    handleLogin();
+                }
+            });
+        }
         
         // Set page title
         setPageTitle('Login - Pitbox Dashboard');

@@ -7,7 +7,153 @@
  * - Real-time data utilities
  * - Chart data generation
  * - ML insights formatting
+ * - Display mode switching (web/kiosk full screen)
  */
+
+// ===== DISPLAY MODE SYSTEM =====
+class DisplayMode {
+  constructor() {
+    this.mode = (localStorage.getItem('display-mode') || 'web');
+    this.listenerSetup = false;
+    this.isNavigating = false;  // Track navigation state across page loads
+    this.initEarly();
+  }
+
+  initEarly() {
+    // Apply mode immediately from localStorage (before DOMContentLoaded)
+    document.documentElement.dataset.displayMode = this.mode;
+    
+    // Reset mode to web if fullscreen not active (happens after page navigation)
+    const isActuallyFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
+    if (this.mode === 'kiosk' && !isActuallyFullscreen) {
+      console.log('Page loaded: fullscreen not active, resetting mode to web');
+      this.mode = 'web';
+      localStorage.setItem('display-mode', 'web');
+      document.documentElement.dataset.displayMode = 'web';
+    }
+    
+    // Setup listeners
+    this.setupFullscreenListener();
+  }
+
+  init() {
+    // At DOMContentLoaded: sync button UI with current state
+    console.log('DOMContentLoaded: mode =', this.mode);
+    this.updateAllButtons();
+  }
+
+  apply(mode) {
+    console.log('Apply: mode', mode);
+    this.mode = mode;
+    localStorage.setItem('display-mode', mode);
+    document.documentElement.dataset.displayMode = mode;
+    this.updateAllButtons();
+    
+    if (mode === 'kiosk') {
+      console.log('Requesting fullscreen...');
+      this.enableKiosk().catch(e => console.error('enableKiosk error:', e));
+    } else {
+      console.log('Exiting fullscreen...');
+      this.disableKiosk().catch(e => console.error('disableKiosk error:', e));
+    }
+  }
+
+  updateAllButtons() {
+    // Update all fullscreen toggle buttons
+    const buttons = document.querySelectorAll('button[onclick="displayMode.toggle()"]');
+    const isKiosk = this.mode === 'kiosk';
+    console.log('Updating', buttons.length, 'buttons, isKiosk:', isKiosk);
+    
+    buttons.forEach(btn => {
+      const icon = btn.querySelector('.material-symbols-outlined');
+      if (icon) {
+        icon.textContent = isKiosk ? 'fullscreen_exit' : 'fullscreen';
+        console.log('Button icon updated to:', icon.textContent);
+      }
+    });
+  }
+
+  async enableKiosk() {
+    try {
+      const elem = document.documentElement;
+      if (elem.requestFullscreen) {
+        await elem.requestFullscreen();
+      } else if (elem.webkitRequestFullscreen) {
+        await elem.webkitRequestFullscreen();
+      }
+    } catch (e) {
+      console.warn('Fullscreen request failed:', e);
+    }
+  }
+
+  async disableKiosk() {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else if (document.webkitFullscreenElement) {
+        await document.webkitExitFullscreen?.();
+      }
+    } catch (e) {
+      console.warn('Exit fullscreen failed:', e);
+    }
+  }
+
+  toggle() {
+    const next = this.mode === 'web' ? 'kiosk' : 'web';
+    console.log('Toggle: changing mode from', this.mode, 'to', next);
+    this.apply(next);
+  }
+
+  getMode() {
+    return this.mode;
+  }
+
+  // Listen for fullscreen changes and ESC key to sync mode
+  setupFullscreenListener() {
+    // Only setup once
+    if (this.listenerSetup) return;
+    this.listenerSetup = true;
+
+    // Detect ESC key press to sync mode to web
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.mode === 'kiosk') {
+        // ESC was pressed in kiosk mode
+        // After fullscreen exits, sync mode to web
+        setTimeout(() => {
+          const isActuallyFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
+          if (!isActuallyFullscreen) {
+            console.log('ESC pressed: syncing mode to web');
+            this.mode = 'web';
+            localStorage.setItem('display-mode', 'web');
+            document.documentElement.dataset.displayMode = 'web';
+            this.updateAllButtons();
+          }
+        }, 100);
+      }
+    });
+
+    // For navigation: when user klik link, prepare for fullscreen re-request
+    // Don't sync mode on fullscreenchange during navigation
+    document.addEventListener('fullscreenchange', () => {
+      // Only log, don't auto-sync on every fullscreen change
+      const isActuallyFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
+      if (!isActuallyFullscreen && this.mode === 'kiosk') {
+        console.log('Fullscreen exited: mode still kiosk, will re-request on next page load');
+      }
+    });
+  }
+}
+
+const displayMode = new DisplayMode();
+
+// Initialize on DOMContentLoaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    displayMode.init();
+  });
+} else {
+  displayMode.init();
+}
 
 /**
  * Generate random telemetry data (for demo purposes)
@@ -261,4 +407,32 @@ function getNavItems(role) {
     ];
     
     return baseNav.filter(item => item.show.includes(role));
+}
+
+/**
+ * Create display mode toggle button (for UI integration)
+ */
+function createDisplayModeToggle() {
+    const button = document.createElement('button');
+    button.className = 'btn btn-secondary';
+    button.id = 'display-mode-toggle';
+  button.innerHTML = '<span class="material-symbols-outlined">fullscreen</span><span>Toggle Mode</span>';
+    button.addEventListener('click', () => {
+        displayMode.toggle();
+        updateDisplayModeButtonLabel();
+    });
+    return button;
+}
+
+/**
+ * Update toggle button label based on current mode
+ */
+function updateDisplayModeButtonLabel() {
+    const button = document.getElementById('display-mode-toggle');
+    if (!button) return;
+    
+    const isKiosk = displayMode.getMode() === 'kiosk';
+    button.innerHTML = isKiosk
+        ? '<span class="material-symbols-outlined">fullscreen_exit</span><span>Exit Full Screen</span>'
+  : '<span class="material-symbols-outlined">fullscreen</span><span>Full Screen</span>';
 }

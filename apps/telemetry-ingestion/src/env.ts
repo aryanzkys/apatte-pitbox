@@ -1,4 +1,7 @@
-import { z, baseEnvSchema, loadEnv } from "@apatte/env";
+import path from "node:path";
+import { z, baseEnvSchema, loadEnv, loadDotenv } from "@apatte/env";
+
+loadDotenv(path.resolve(process.cwd(), "../../.env"));
 
 const booleanFromEnv = z.preprocess(value => {
   if (typeof value === "string") {
@@ -18,9 +21,10 @@ const envSchema = baseEnvSchema.extend({
       message: "SUPABASE_URL must start with http:// or https://"
     }),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+  MQTT_OPTIONAL: booleanFromEnv.default(true),
   MQTT_BROKER_URL: z
     .string()
-    .min(1)
+    .default("mqtt://127.0.0.1:1883")
     .refine(value => /^(mqtt|ws|wss):\/\//.test(value), {
       message: "MQTT_BROKER_URL must start with mqtt://, ws://, or wss://"
     }),
@@ -32,7 +36,8 @@ const envSchema = baseEnvSchema.extend({
   DEADLETTER_MAX_BYTES: z.coerce.number().int().positive().default(4096),
   INGESTION_HTTP_PORT: z.coerce.number().int().positive().default(8081),
   HEALTH_DB_STALE_S: z.coerce.number().int().positive().default(60),
-  HEALTH_MQTT_REQUIRED: booleanFromEnv.default(true),
+  HEALTH_MQTT_REQUIRED: booleanFromEnv.default(false),
+  MQTT_OFFLINE_LOG_INTERVAL_MS: z.coerce.number().int().positive().default(15000),
   INGESTION_BATCH_SIZE: z.coerce.number().int().positive().default(200),
   INGESTION_FLUSH_MS: z.coerce.number().int().positive().default(250),
   INGESTION_MAX_RETRIES: z.coerce.number().int().nonnegative().default(3),
@@ -44,6 +49,7 @@ export type TelemetryIngestionEnv = z.infer<typeof envSchema>;
 const rawEnv = {
   NODE_ENV: process.env.NODE_ENV,
   LOG_LEVEL: process.env.LOG_LEVEL,
+  MQTT_OPTIONAL: process.env.MQTT_OPTIONAL,
   SUPABASE_URL: process.env.SUPABASE_URL,
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   MQTT_BROKER_URL: process.env.MQTT_BROKER_URL,
@@ -56,6 +62,7 @@ const rawEnv = {
   INGESTION_HTTP_PORT: process.env.INGESTION_HTTP_PORT,
   HEALTH_DB_STALE_S: process.env.HEALTH_DB_STALE_S,
   HEALTH_MQTT_REQUIRED: process.env.HEALTH_MQTT_REQUIRED,
+  MQTT_OFFLINE_LOG_INTERVAL_MS: process.env.MQTT_OFFLINE_LOG_INTERVAL_MS,
   INGESTION_BATCH_SIZE: process.env.INGESTION_BATCH_SIZE,
   INGESTION_FLUSH_MS: process.env.INGESTION_FLUSH_MS,
   INGESTION_MAX_RETRIES: process.env.INGESTION_MAX_RETRIES,

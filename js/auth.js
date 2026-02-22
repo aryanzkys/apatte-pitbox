@@ -21,11 +21,30 @@ const TEST_ACCOUNTS = {
 
 // Role to page mapping
 const ROLE_PAGE_MAP = {
-    'admin': 'overview.html',
-    'manager': 'overview.html',
-    'ph-h2': 'ph-h2.html',
-    'uc-be': 'uc-be.html'
+    'admin': 'overview',
+    'manager': 'overview',
+    'ph-h2': 'ph-h2',
+    'uc-be': 'uc-be'
 };
+
+function isLegacyRouteMode() {
+    return window.location.pathname.startsWith('/legacy/');
+}
+
+function buildPageUrl(pageName, queryParams = {}) {
+    const normalizedPage = (pageName || 'index').replace('.html', '');
+    const basePath = isLegacyRouteMode() ? `/legacy/${normalizedPage}` : `${normalizedPage}.html`;
+
+    const params = new URLSearchParams();
+    Object.entries(queryParams).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+            params.set(key, String(value));
+        }
+    });
+
+    const queryString = params.toString();
+    return queryString ? `${basePath}?${queryString}` : basePath;
+}
 
 // Page access permissions
 const PAGE_PERMISSIONS = {
@@ -81,7 +100,7 @@ function checkPageAccess() {
     
     // If no role, redirect to login
     if (!userRole) {
-        window.location.href = 'index.html';
+        window.location.href = buildPageUrl('index');
         return false;
     }
     
@@ -92,8 +111,8 @@ function checkPageAccess() {
     }
     
     // Redirect to appropriate page based on role
-    const redirectPage = ROLE_PAGE_MAP[userRole] || 'index.html';
-    window.location.href = redirectPage + '?role=' + userRole;
+    const redirectPage = ROLE_PAGE_MAP[userRole] || 'index';
+    window.location.href = buildPageUrl(redirectPage, { role: userRole });
     return false;
 }
 
@@ -134,11 +153,11 @@ function handleLogin() {
         showNotification('Login berhasil! Redirecting...', 'success');
         
         // Redirect based on role
-        const redirectPage = ROLE_PAGE_MAP[role] || 'index.html';
+        const redirectPage = ROLE_PAGE_MAP[role] || 'index';
         
         // PENTING: Gunakan setTimeout untuk menghindari infinite redirect loop
         setTimeout(() => {
-            window.location.href = redirectPage + '?auth=' + Date.now();
+            window.location.href = buildPageUrl(redirectPage, { auth: Date.now() });
         }, 500);
     } else {
         showNotification('Engineer ID atau Security Token salah. Gunakan akun test: budi/siti/rudi/andi', 'error');
@@ -151,7 +170,7 @@ function handleLogin() {
 function handleLogout() {
     sessionStorage.removeItem('userRole');
     sessionStorage.removeItem('userEmail');
-    window.location.href = 'index.html';
+    window.location.href = buildPageUrl('index');
 }
 
 /**

@@ -1,4 +1,5 @@
 import mqtt from "mqtt";
+import * as net from "node:net";
 import { validateEnv } from "./env";
 import { handleMqttMessage } from "./handlers/message";
 import { child } from "./lib/logger";
@@ -15,6 +16,22 @@ const handlerLogger = child({ component: "mqtt_handler" });
 
 const prefix = env.TELEMETRY_TOPIC_PREFIX || "apatte";
 const clientId = env.MQTT_CLIENT_ID || `pitbox-ingestion-${Math.random().toString(16).slice(2)}`;
+const mqttOptional = env.MQTT_OPTIONAL;
+const mqttOfflineLogIntervalMs = env.MQTT_OFFLINE_LOG_INTERVAL_MS;
+
+let lastMqttOfflineLogAt = 0;
+let mqttConnectedOnce = false;
+
+const shouldLogOfflineNow = () => {
+  const now = Date.now();
+  if (now - lastMqttOfflineLogAt >= mqttOfflineLogIntervalMs) {
+    lastMqttOfflineLogAt = now;
+    return true;
+  }
+  return false;
+};
+
+const isConnectionRefusedError = (errorMessage: string) => /ECONNREFUSED/i.test(errorMessage);
 
 const batcher = new TelemetryBatcher({
   batchSize: env.INGESTION_BATCH_SIZE,
@@ -43,9 +60,38 @@ const healthServer = createHealthServer({
   logger: child({ component: "http" })
 });
 
-healthServer.server.listen(env.INGESTION_HTTP_PORT, () => {
-  logger.log("info", "http_listening", { port: env.INGESTION_HTTP_PORT });
-});
+const isPortAvailable = async (port: number): Promise<boolean> =>
+  new Promise(resolve => {
+    const probe = net.createServer();
+
+    probe.once("error", () => {
+      resolve(false);
+    });
+
+    probe.once("listening", () => {
+      probe.close(() => resolve(true));
+    });
+
+    probe.listen(port);
+  });
+
+const startHealthServer = async (preferredPort: number) => {
+  let port = preferredPort;
+
+  while (!(await isPortAvailable(port))) {
+    logger.log("warn", "http_port_in_use", {
+      requested_port: port,
+      fallback_port: port + 1
+    });
+    port += 1;
+  }
+
+  healthServer.server.listen(port, () => {
+    logger.log("info", "http_listening", { port });
+  });
+};
+
+void startHealthServer(env.INGESTION_HTTP_PORT);
 
 const subscribeTopics: Array<{ topic: string; qos: 0 | 1 }> = [
   { topic: `${prefix}/v1/+/telemetry`, qos: 0 },
@@ -54,6 +100,7 @@ const subscribeTopics: Array<{ topic: string; qos: 0 | 1 }> = [
 ];
 
 client.on("connect", () => {
+  mqttConnectedOnce = true;
   metrics.setGauge("mqtt_connected", true);
   metrics.setGauge("mqtt_last_event_at", new Date().toISOString());
   logger.log("info", "mqtt_connected", {
@@ -96,24 +143,56 @@ client.on("message", async (topic, payload) => {
 
 client.on("reconnect", () => {
   metrics.setGauge("mqtt_last_event_at", new Date().toISOString());
-  logger.log("info", "mqtt_reconnect");
+  if (!mqttOptional || shouldLogOfflineNow()) {
+    logger.log("info", "mqtt_reconnect", {
+      mqtt_optional: mqttOptional,
+      connected_once: mqttConnectedOnce
+    });
+  }
 });
 
 client.on("offline", () => {
   metrics.setGauge("mqtt_connected", false);
   metrics.setGauge("mqtt_last_event_at", new Date().toISOString());
-  logger.log("warn", "mqtt_offline");
+  if (!mqttOptional || shouldLogOfflineNow()) {
+    logger.log("warn", "mqtt_offline", {
+      mqtt_optional: mqttOptional,
+      connected_once: mqttConnectedOnce
+    });
+  }
 });
 
 client.on("close", () => {
   metrics.setGauge("mqtt_connected", false);
   metrics.setGauge("mqtt_last_event_at", new Date().toISOString());
-  logger.log("warn", "mqtt_close");
+  if (!mqttOptional || shouldLogOfflineNow()) {
+    logger.log("warn", "mqtt_close", {
+      mqtt_optional: mqttOptional,
+      connected_once: mqttConnectedOnce
+    });
+  }
 });
 
 client.on("error", error => {
+  const refused = isConnectionRefusedError(error.message);
   metrics.setGauge("mqtt_last_event_at", new Date().toISOString());
-  logger.log("error", "mqtt_error", { error: error.message });
+  if (mqttOptional && refused) {
+    if (shouldLogOfflineNow()) {
+      logger.log("warn", "mqtt_unavailable_optional", {
+        error: error.message,
+        mqtt_optional: true,
+        reconnecting: true,
+        connected_once: mqttConnectedOnce
+      });
+    }
+    return;
+  }
+
+  logger.log("error", "mqtt_error", {
+    error: error.message,
+    mqtt_optional: mqttOptional,
+    connected_once: mqttConnectedOnce
+  });
 });
 
 let shuttingDown = false;

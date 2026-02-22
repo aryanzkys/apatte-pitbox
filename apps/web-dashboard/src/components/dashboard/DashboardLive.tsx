@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { createContext, useContext, useMemo, useState } from "react";
 import { useDashboardTelemetry, type DashboardTelemetryState } from "./useDashboardTelemetry";
 
@@ -22,6 +23,8 @@ const useLiveContext = () => {
   }
   return ctx;
 };
+
+export const useDashboardLive = () => useLiveContext();
 
 export const DashboardLiveProvider = ({ children }: { children: React.ReactNode }) => {
   const telemetry = useDashboardTelemetry();
@@ -97,16 +100,14 @@ export const NotificationButton = () => {
 };
 
 export const SettingsButton = () => {
-  const { toggleSettings } = useLiveContext();
   return (
-    <button
-      onClick={toggleSettings}
+    <Link
+      href="/dashboard/engineer/settings"
       className="flex items-center justify-center rounded-lg h-9 w-9 bg-border-dark hover:bg-primary transition-colors"
       aria-label="Settings"
-      type="button"
     >
       <span className="material-symbols-outlined text-[20px]">settings</span>
-    </button>
+    </Link>
   );
 };
 

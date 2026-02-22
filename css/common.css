@@ -42,6 +42,45 @@ body {
     overflow-x: hidden;
 }
 
+/* ===== ENHANCED APP BACKGROUND ===== */
+.app-page-bg {
+    position: relative;
+    isolation: isolate;
+    background:
+        radial-gradient(circle at 12% 18%, rgba(59, 130, 246, 0.12), transparent 34%),
+        radial-gradient(circle at 88% 82%, rgba(16, 185, 129, 0.1), transparent 38%),
+        linear-gradient(140deg, #070a11 0%, #0b1220 45%, #111827 100%);
+}
+
+.app-page-bg::before,
+.app-page-bg::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+}
+
+.app-page-bg::before {
+    z-index: -2;
+    background:
+        radial-gradient(42% 38% at 25% 30%, rgba(59, 130, 246, 0.14), transparent 70%),
+        radial-gradient(36% 34% at 78% 70%, rgba(16, 185, 129, 0.12), transparent 72%);
+    filter: blur(34px);
+    animation: appBgFloat 18s ease-in-out infinite alternate;
+}
+
+.app-page-bg::after {
+    z-index: -1;
+    background-image:
+        linear-gradient(rgba(40, 47, 67, 0.13) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(40, 47, 67, 0.13) 1px, transparent 1px);
+    background-size: 30px 30px;
+    mask-image: radial-gradient(circle at 50% 36%, rgba(0, 0, 0, 0.95), transparent 76%);
+    -webkit-mask-image: radial-gradient(circle at 50% 36%, rgba(0, 0, 0, 0.95), transparent 76%);
+    opacity: 0.38;
+    animation: appGridShift 30s linear infinite;
+}
+
 /* ===== SCROLLBAR ===== */
 ::-webkit-scrollbar {
     width: 10px;
@@ -426,6 +465,24 @@ label {
     }
 }
 
+@keyframes appBgFloat {
+    0% {
+        transform: translate(-2%, -1%) scale(1);
+    }
+    100% {
+        transform: translate(2%, 1%) scale(1.05);
+    }
+}
+
+@keyframes appGridShift {
+    0% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(30px);
+    }
+}
+
 .animate-fade {
     animation: fadeIn 0.3s ease-out;
 }
@@ -496,3 +553,10 @@ label {
 
 .cursor-pointer { cursor: pointer; }
 .select-none { user-select: none; }
+
+/* ===== DISPLAY MODE SYSTEM ===== */
+/* Kiosk mode: fullscreen without hiding UI elements - all UI stays visible, scrolling enabled */
+html[data-display-mode="kiosk"] body {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+}

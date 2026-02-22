@@ -64,12 +64,14 @@
     </style>
 </head>
 
-<body class="bg-background-dark text-white min-h-screen flex flex-col dark">
+<body class="app-page-bg bg-background-dark text-white min-h-screen flex flex-col dark">
     <!-- Header with Navigation -->
     <header class="border-b border-border-dark bg-surface-dark sticky top-0 z-40">
         <div class="flex items-center justify-between px-6 py-3">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-gradient-to-br from-accent-shell to-red-900 rounded-lg flex items-center justify-center font-bold text-lg">⚙️</div>
+                <div class="w-10 h-10 rounded-lg overflow-hidden border border-border-dark bg-black/30 p-1">
+                    <img src="./logos/apatte62-logo.png" alt="Apatte 62 Logo" class="w-full h-full object-contain" />
+                </div>
                 <div>
                     <h1 class="text-xl font-bold text-accent-shell">ADMIN PANEL</h1>
                     <p class="text-xs text-white/40">System Configuration & Management</p>
@@ -90,6 +92,10 @@
                 <!-- Status & Controls -->
                 <div class="flex items-center gap-3">
                     <span class="badge badge-primary">ADMIN</span>
+                    
+                    <button onclick="displayMode.toggle()" class="p-1.5 hover:bg-surface-dark rounded-lg transition-all" title="Toggle Fullscreen Mode">
+                        <span class="material-symbols-outlined text-xl">fullscreen</span>
+                    </button>
                     
                     <button onclick="handleLogout()" class="p-1.5 hover:bg-surface-dark rounded-lg transition-all">
                         <span class="material-symbols-outlined text-xl">logout</span>
@@ -302,6 +308,7 @@
     <div class="border-b border-border-dark bg-surface-dark/60 sticky top-16 z-30">
         <div class="px-6 flex items-center gap-4 overflow-x-auto">
             <button class="tab-button active" data-tab="ml-config">ML Model Settings</button>
+            <button class="tab-button" data-tab="maps">Track Maps</button>
             <button class="tab-button" data-tab="thresholds">Threshold Config</button>
             <button class="tab-button" data-tab="vehicles">Vehicle Management</button>
             <button class="tab-button" data-tab="users">User Roles</button>
@@ -409,6 +416,130 @@
                                 <button class="btn btn-primary w-full text-sm">Test Alert</button>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-lg">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold">ML Runtime Bridge</h3>
+                            <span class="badge badge-primary">KERANGKA_ML</span>
+                        </div>
+                        <p class="text-sm text-white/60 mb-4">
+                            Hubungkan dashboard ke backend Python yang menjalankan <span class="font-mono text-white/80">inference/inference_engine.py</span>.
+                        </p>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-sm text-white/60 mb-2 block">Inference Endpoint</label>
+                                <input id="mlEndpointInput" type="text" placeholder="http://127.0.0.1:8000/api/ml/inference" class="w-full px-3 py-2 bg-black/40 border border-border-dark rounded text-sm" />
+                            </div>
+                            <div>
+                                <label class="text-sm text-white/60 mb-2 block">Timeout (ms)</label>
+                                <input id="mlTimeoutInput" type="number" min="300" max="10000" step="100" value="1200" class="w-full px-3 py-2 bg-black/40 border border-border-dark rounded text-sm" />
+                            </div>
+                        </div>
+                        <div class="mt-4 flex items-center gap-3">
+                            <button id="testMLConnectionBtn" class="btn btn-primary text-sm" type="button">Test ML Connection</button>
+                            <span id="mlConnectionStatus" class="text-xs text-white/50">Belum dites.</span>
+                        </div>
+                        <label class="flex items-center gap-2 text-sm mt-4">
+                            <input id="mlDemoModeToggle" type="checkbox" class="w-4 h-4" />
+                            Demo fallback mode (aktifkan jika backend ML belum running)
+                        </label>
+                        <div class="mt-4 text-xs text-white/50" id="mlModelCatalog"></div>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-lg">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold">Training Control Center</h3>
+                            <span class="badge badge-warning">ADAPTIVE INTELLIGENCE</span>
+                        </div>
+                        <p class="text-sm text-white/60 mb-4">
+                            Kontrol ON/OFF training model sesuai dokumentasi ML (synthetic data, transfer learning, online adaptation, dan retrain antar-attempt).
+                        </p>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <label class="flex items-center gap-2 text-sm">
+                                <input id="trainingGlobalToggle" type="checkbox" class="w-4 h-4" />
+                                Global training enable
+                            </label>
+                            <label class="flex items-center gap-2 text-sm">
+                                <input id="onlineLearningToggle" type="checkbox" class="w-4 h-4" />
+                                Online learning enable
+                            </label>
+                            <label class="flex items-center gap-2 text-sm">
+                                <input id="retrainBetweenAttemptsToggle" type="checkbox" class="w-4 h-4" />
+                                Retrain between attempts (15 min window)
+                            </label>
+                            <label class="flex items-center gap-2 text-sm">
+                                <input id="syntheticDataToggle" type="checkbox" class="w-4 h-4" />
+                                Synthetic data generation enable
+                            </label>
+                            <label class="flex items-center gap-2 text-sm col-span-2">
+                                <input id="transferLearningToggle" type="checkbox" class="w-4 h-4" />
+                                Transfer learning enable (SEM historical + research)
+                            </label>
+                        </div>
+
+                        <div class="mt-5">
+                            <h4 class="text-sm font-semibold text-white/80 mb-3">Per-model Training Toggle (8 Models)</h4>
+                            <div id="trainingModelToggles" class="grid grid-cols-2 gap-3"></div>
+                        </div>
+
+                        <div class="mt-5 flex items-center gap-3">
+                            <button id="syncTrainingConfigBtn" class="btn btn-primary text-sm" type="button">Sync Config to Backend</button>
+                            <button id="runTrainingNowBtn" class="btn btn-shell text-sm" type="button">Run Training Now</button>
+                            <span id="trainingStatusText" class="text-xs text-white/50">Belum ada eksekusi training.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MAPS TAB -->
+            <div class="tab-content" id="maps">
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold">Track Map Management</h2>
+                        <button class="btn btn-shell" id="saveMapSettingsBtn">💾 Save Map Settings</button>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-lg">
+                        <h3 class="text-lg font-bold mb-4">Upload Track Layout</h3>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label class="text-sm text-white/60 mb-2 block">Track Name</label>
+                                <input id="trackNameInput" type="text" placeholder="e.g., Mandalika Circuit" class="w-full px-3 py-2 bg-black/40 border border-border-dark rounded text-sm" />
+                            </div>
+                            <div>
+                                <label class="text-sm text-white/60 mb-2 block">Track Code</label>
+                                <input id="trackCodeInput" type="text" placeholder="e.g., mandalika" class="w-full px-3 py-2 bg-black/40 border border-border-dark rounded text-sm" />
+                            </div>
+                            <div>
+                                <label class="text-sm text-white/60 mb-2 block">Layout File</label>
+                                <input id="trackFileInput" type="file" accept=".geojson,.json,.gpx,.kml" class="w-full px-3 py-2 bg-black/40 border border-border-dark rounded text-sm" />
+                            </div>
+                        </div>
+                        <div class="mt-4 flex items-center gap-3">
+                            <button id="uploadTrackBtn" class="btn btn-primary text-sm">Upload Track Map</button>
+                            <span id="trackUploadStatus" class="text-xs text-white/50">Belum ada file dipilih.</span>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-lg">
+                        <h3 class="text-lg font-bold mb-4">Active Map for Overview</h3>
+                        <div class="grid grid-cols-3 gap-4 items-end">
+                            <div>
+                                <label class="text-sm text-white/60 mb-2 block">Select Active Map</label>
+                                <select id="activeMapSelect" class="w-full px-3 py-2 bg-black/40 border border-border-dark rounded text-sm"></select>
+                            </div>
+                            <div>
+                                <button id="setActiveMapBtn" class="btn btn-primary text-sm">Set Active Map</button>
+                            </div>
+                            <div class="text-xs text-white/50" id="activeMapSummary">Belum ada map aktif.</div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-lg">
+                        <h3 class="text-lg font-bold mb-4">Uploaded Maps</h3>
+                        <div id="mapsList" class="space-y-3 text-sm text-white/70"></div>
                     </div>
                 </div>
             </div>
@@ -685,6 +816,7 @@
     <!-- Scripts -->
     <script src="js/auth.js"></script>
     <script src="js/common.js"></script>
+    <script src="js/ml-bridge.js"></script>
     
     <script>
         // Check authorization
@@ -714,6 +846,28 @@
                 h2Purge: { interval: 15, duration: 30 },
                 fatigue: { sensitivity: 70, audioAlert: true }
             },
+            trainingConfig: {
+                globalEnabled: true,
+                onlineLearningEnabled: false,
+                retrainBetweenAttempts: true,
+                syntheticDataEnabled: true,
+                transferLearningEnabled: true,
+                models: {
+                    energy: true,
+                    racing_line: true,
+                    h2_purge: true,
+                    fatigue: true,
+                    anomaly: true,
+                    efficiency: true,
+                    slip_coast: true,
+                    rank: true
+                }
+            },
+            mlBridge: {
+                endpoint: 'http://127.0.0.1:8000/api/ml/inference',
+                demoMode: false,
+                timeoutMs: 1200
+            },
             thresholds: {
                 'ph-h2': {
                     h2TankLow: 30, fuelCellTemp: 85, efficiencyMin: 75,
@@ -733,7 +887,20 @@
                 { id: 'ENG002', name: 'Siti Manager', role: 'manager', access: 'All Vehicles', status: 'ACTIVE' },
                 { id: 'ENG003', name: 'Rudi H2 Team', role: 'ph-h2', access: 'PH-H2 Only', status: 'ACTIVE' },
                 { id: 'ENG004', name: 'Andi E-Team', role: 'uc-be', access: 'UC-BE Only', status: 'ACTIVE' }
-            ]
+            ],
+            maps: [
+                {
+                    id: 'map-brasilia-default',
+                    name: 'Brasília Circuit',
+                    code: 'brasilia',
+                    fileName: 'default-layout.geojson',
+                    fileType: 'geojson',
+                    featureCount: 1,
+                    uploadedAt: new Date().toISOString(),
+                    isDefault: true
+                }
+            ],
+            activeMapId: 'map-brasilia-default'
         };
 
         function loadAppData() {
@@ -741,6 +908,47 @@
             if (saved) {
                 Object.assign(appData, JSON.parse(saved));
             }
+
+            if (!Array.isArray(appData.maps) || appData.maps.length === 0) {
+                appData.maps = [{
+                    id: 'map-brasilia-default',
+                    name: 'Brasília Circuit',
+                    code: 'brasilia',
+                    fileName: 'default-layout.geojson',
+                    fileType: 'geojson',
+                    featureCount: 1,
+                    uploadedAt: new Date().toISOString(),
+                    isDefault: true
+                }];
+            }
+
+            if (!appData.activeMapId || !appData.maps.some(map => map.id === appData.activeMapId)) {
+                appData.activeMapId = appData.maps[0].id;
+            }
+
+            appData.mlBridge = {
+                endpoint: appData.mlBridge?.endpoint || 'http://127.0.0.1:8000/api/ml/inference',
+                demoMode: appData.mlBridge?.demoMode ?? false,
+                timeoutMs: Number(appData.mlBridge?.timeoutMs) || 1200
+            };
+
+            appData.trainingConfig = {
+                globalEnabled: appData.trainingConfig?.globalEnabled ?? true,
+                onlineLearningEnabled: appData.trainingConfig?.onlineLearningEnabled ?? false,
+                retrainBetweenAttempts: appData.trainingConfig?.retrainBetweenAttempts ?? true,
+                syntheticDataEnabled: appData.trainingConfig?.syntheticDataEnabled ?? true,
+                transferLearningEnabled: appData.trainingConfig?.transferLearningEnabled ?? true,
+                models: {
+                    energy: appData.trainingConfig?.models?.energy ?? true,
+                    racing_line: appData.trainingConfig?.models?.racing_line ?? true,
+                    h2_purge: appData.trainingConfig?.models?.h2_purge ?? true,
+                    fatigue: appData.trainingConfig?.models?.fatigue ?? true,
+                    anomaly: appData.trainingConfig?.models?.anomaly ?? true,
+                    efficiency: appData.trainingConfig?.models?.efficiency ?? true,
+                    slip_coast: appData.trainingConfig?.models?.slip_coast ?? true,
+                    rank: appData.trainingConfig?.models?.rank ?? true
+                }
+            };
         }
 
         function saveAppData() {
@@ -1255,6 +1463,430 @@
             });
         }
 
+        // ===== MAP MANAGEMENT =====
+        function slugifyTrackCode(value = '') {
+            return value
+                .toLowerCase()
+                .trim()
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-');
+        }
+
+        function createMapId(code) {
+            return `map-${code}-${Date.now()}`;
+        }
+
+        function parseGeoJsonMeta(fileText) {
+            try {
+                const parsed = JSON.parse(fileText);
+                const features = Array.isArray(parsed?.features) ? parsed.features.length : 0;
+                const bbox = parsed?.bbox || null;
+                return { valid: true, features, bbox };
+            } catch {
+                return { valid: false, features: 0, bbox: null };
+            }
+        }
+
+        function formatDateTime(isoDate) {
+            if (!isoDate) return '-';
+            return new Date(isoDate).toLocaleString('id-ID');
+        }
+
+        function renderMapList() {
+            const mapsList = document.getElementById('mapsList');
+            if (!mapsList) return;
+
+            if (!appData.maps.length) {
+                mapsList.innerHTML = '<div class="text-white/50">Belum ada map.</div>';
+                return;
+            }
+
+            mapsList.innerHTML = appData.maps.map((map) => {
+                const isActive = map.id === appData.activeMapId;
+                return `
+                    <div class="bg-black/30 border ${isActive ? 'border-accent-electric/60' : 'border-border-dark'} rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="font-semibold text-white">${map.name}</div>
+                            <span class="badge ${isActive ? 'badge-success' : 'badge-primary'}">${isActive ? 'ACTIVE' : 'AVAILABLE'}</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs text-white/60 font-mono">
+                            <div>code: ${map.code}</div>
+                            <div>type: ${map.fileType || '-'}</div>
+                            <div>file: ${map.fileName || '-'}</div>
+                            <div>features: ${map.featureCount ?? '-'}</div>
+                            <div class="col-span-2">uploaded: ${formatDateTime(map.uploadedAt)}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderActiveMapSelect() {
+            const select = document.getElementById('activeMapSelect');
+            const summary = document.getElementById('activeMapSummary');
+            if (!select) return;
+
+            select.innerHTML = appData.maps.map((map) => (
+                `<option value="${map.id}" ${map.id === appData.activeMapId ? 'selected' : ''}>${map.name} (${map.code})</option>`
+            )).join('');
+
+            const activeMap = appData.maps.find(map => map.id === appData.activeMapId);
+            if (summary) {
+                summary.textContent = activeMap
+                    ? `Active map: ${activeMap.name} (${activeMap.code})`
+                    : 'Belum ada map aktif.';
+            }
+        }
+
+        async function handleTrackUpload() {
+            const trackNameInput = document.getElementById('trackNameInput');
+            const trackCodeInput = document.getElementById('trackCodeInput');
+            const trackFileInput = document.getElementById('trackFileInput');
+            const statusEl = document.getElementById('trackUploadStatus');
+
+            const trackName = trackNameInput?.value?.trim();
+            const trackCode = slugifyTrackCode(trackCodeInput?.value || trackName || '');
+            const file = trackFileInput?.files?.[0];
+
+            if (!trackName || !trackCode || !file) {
+                showNotification('Track name, code, dan file wajib diisi.', 'error');
+                return;
+            }
+
+            const fileExt = (file.name.split('.').pop() || '').toLowerCase();
+            const allowed = ['geojson', 'json', 'gpx', 'kml'];
+            if (!allowed.includes(fileExt)) {
+                showNotification('Format file harus GeoJSON/JSON/GPX/KML.', 'error');
+                return;
+            }
+
+            let featureCount = 0;
+            let bbox = null;
+
+            if (fileExt === 'geojson' || fileExt === 'json') {
+                const text = await file.text();
+                const meta = parseGeoJsonMeta(text);
+                if (!meta.valid) {
+                    showNotification('GeoJSON tidak valid. Periksa format file.', 'error');
+                    return;
+                }
+                featureCount = meta.features;
+                bbox = meta.bbox;
+            }
+
+            const existing = appData.maps.find(map => map.code === trackCode);
+            const payload = {
+                id: existing?.id || createMapId(trackCode),
+                name: trackName,
+                code: trackCode,
+                fileName: file.name,
+                fileType: fileExt,
+                featureCount,
+                bbox,
+                uploadedAt: new Date().toISOString()
+            };
+
+            if (existing) {
+                Object.assign(existing, payload);
+            } else {
+                appData.maps.push(payload);
+            }
+
+            if (!appData.activeMapId) {
+                appData.activeMapId = payload.id;
+            }
+
+            saveAppData();
+            renderMapList();
+            renderActiveMapSelect();
+
+            if (statusEl) {
+                statusEl.textContent = `Uploaded: ${payload.name} (${payload.code})`;
+            }
+
+            showNotification(`✓ Map ${payload.name} berhasil diupload.`, 'success');
+
+            if (trackFileInput) trackFileInput.value = '';
+        }
+
+        function setActiveMap() {
+            const select = document.getElementById('activeMapSelect');
+            if (!select?.value) {
+                showNotification('Pilih map terlebih dahulu.', 'error');
+                return;
+            }
+
+            appData.activeMapId = select.value;
+            saveAppData();
+            renderMapList();
+            renderActiveMapSelect();
+
+            const activeMap = appData.maps.find(map => map.id === appData.activeMapId);
+            showNotification(`✓ Active map: ${activeMap?.name || 'Unknown'}`, 'success');
+        }
+
+        function bindMLBridgeSettings() {
+            const endpointInput = document.getElementById('mlEndpointInput');
+            const timeoutInput = document.getElementById('mlTimeoutInput');
+            const demoToggle = document.getElementById('mlDemoModeToggle');
+            const catalogEl = document.getElementById('mlModelCatalog');
+            const testBtn = document.getElementById('testMLConnectionBtn');
+            const statusEl = document.getElementById('mlConnectionStatus');
+
+            if (endpointInput) endpointInput.value = appData.mlBridge.endpoint || '';
+            if (timeoutInput) timeoutInput.value = Number(appData.mlBridge.timeoutMs) || 1200;
+            if (demoToggle) demoToggle.checked = appData.mlBridge.demoMode ?? true;
+
+            if (catalogEl && window.MLBridge?.getCatalog) {
+                const models = window.MLBridge.getCatalog();
+                catalogEl.textContent = `Loaded models: ${models.map(model => model.module).join(' • ')}`;
+            }
+
+            endpointInput?.addEventListener('input', () => {
+                appData.mlBridge.endpoint = endpointInput.value.trim();
+                saveAppData();
+            });
+
+            timeoutInput?.addEventListener('input', () => {
+                appData.mlBridge.timeoutMs = Number(timeoutInput.value) || 1200;
+                saveAppData();
+            });
+
+            demoToggle?.addEventListener('change', () => {
+                appData.mlBridge.demoMode = demoToggle.checked;
+                saveAppData();
+            });
+
+            testBtn?.addEventListener('click', async () => {
+                const endpoint = (endpointInput?.value || '').trim();
+                if (!endpoint) {
+                    if (statusEl) statusEl.textContent = 'Endpoint kosong.';
+                    showNotification('Isi endpoint inference dulu.', 'error');
+                    return;
+                }
+
+                const healthEndpoint = endpoint.replace(/\/api\/ml\/inference$/, '/api/ml/health');
+                if (statusEl) statusEl.textContent = 'Testing connection...';
+
+                try {
+                    const response = await fetch(healthEndpoint, { method: 'GET' });
+                    if (!response.ok) {
+                        throw new Error(`Health check failed ${response.status}`);
+                    }
+
+                    const payload = await response.json();
+                    const mode = payload?.mode || 'unknown';
+                    const loaded = payload?.models_loaded ?? 0;
+                    if (statusEl) statusEl.textContent = `Connected • mode=${mode} • models=${loaded}`;
+                    showNotification('✓ ML backend connected!', 'success');
+                } catch (error) {
+                    if (statusEl) statusEl.textContent = 'Connection failed. Fallback mode recommended.';
+                    showNotification('Tidak bisa terhubung ke ML backend.', 'error');
+                }
+            });
+        }
+
+        function getTrainingModelMeta() {
+            return [
+                { key: 'energy', label: 'Energy Finish Predictor' },
+                { key: 'racing_line', label: 'Racing Line Optimizer' },
+                { key: 'h2_purge', label: 'H2 Purge Scheduler' },
+                { key: 'fatigue', label: 'Driver Fatigue Detector' },
+                { key: 'anomaly', label: 'Anomaly Detection System' },
+                { key: 'efficiency', label: 'Efficiency Map Recommender' },
+                { key: 'slip_coast', label: 'Slip & Coasting Optimizer' },
+                { key: 'rank', label: 'Cross-Vehicle Rank Predictor' }
+            ];
+        }
+
+        function renderTrainingModelToggles() {
+            const container = document.getElementById('trainingModelToggles');
+            if (!container) return;
+
+            container.innerHTML = getTrainingModelMeta().map((model) => {
+                const checked = appData.trainingConfig?.models?.[model.key] ? 'checked' : '';
+                return `
+                    <label class="flex items-center gap-2 text-sm bg-black/30 border border-border-dark rounded-lg px-3 py-2">
+                        <input type="checkbox" class="w-4 h-4 training-model-toggle" data-model-key="${model.key}" ${checked} />
+                        <span class="text-white/80">${model.label}</span>
+                    </label>
+                `;
+            }).join('');
+
+            container.querySelectorAll('.training-model-toggle').forEach((checkbox) => {
+                checkbox.addEventListener('change', () => {
+                    const key = checkbox.dataset.modelKey;
+                    appData.trainingConfig.models[key] = checkbox.checked;
+                    saveAppData();
+                });
+            });
+        }
+
+        function collectTrainingConfigFromUI() {
+            appData.trainingConfig.globalEnabled = !!document.getElementById('trainingGlobalToggle')?.checked;
+            appData.trainingConfig.onlineLearningEnabled = !!document.getElementById('onlineLearningToggle')?.checked;
+            appData.trainingConfig.retrainBetweenAttempts = !!document.getElementById('retrainBetweenAttemptsToggle')?.checked;
+            appData.trainingConfig.syntheticDataEnabled = !!document.getElementById('syntheticDataToggle')?.checked;
+            appData.trainingConfig.transferLearningEnabled = !!document.getElementById('transferLearningToggle')?.checked;
+
+            document.querySelectorAll('.training-model-toggle').forEach((checkbox) => {
+                const key = checkbox.dataset.modelKey;
+                appData.trainingConfig.models[key] = checkbox.checked;
+            });
+        }
+
+        function applyTrainingConfigToUI() {
+            const cfg = appData.trainingConfig;
+            const globalToggle = document.getElementById('trainingGlobalToggle');
+            const onlineToggle = document.getElementById('onlineLearningToggle');
+            const retrainToggle = document.getElementById('retrainBetweenAttemptsToggle');
+            const syntheticToggle = document.getElementById('syntheticDataToggle');
+            const transferToggle = document.getElementById('transferLearningToggle');
+
+            if (globalToggle) globalToggle.checked = !!cfg.globalEnabled;
+            if (onlineToggle) onlineToggle.checked = !!cfg.onlineLearningEnabled;
+            if (retrainToggle) retrainToggle.checked = !!cfg.retrainBetweenAttempts;
+            if (syntheticToggle) syntheticToggle.checked = !!cfg.syntheticDataEnabled;
+            if (transferToggle) transferToggle.checked = !!cfg.transferLearningEnabled;
+
+            renderTrainingModelToggles();
+        }
+
+        async function syncTrainingConfigToBackend() {
+            collectTrainingConfigFromUI();
+            saveAppData();
+
+            const endpoint = (appData.mlBridge?.endpoint || '').trim();
+            const statusEl = document.getElementById('trainingStatusText');
+
+            if (!endpoint) {
+                if (statusEl) statusEl.textContent = 'Endpoint inference belum diisi.';
+                showNotification('Isi endpoint inference terlebih dahulu.', 'error');
+                return;
+            }
+
+            const trainingConfigEndpoint = endpoint.replace(/\/api\/ml\/inference$/, '/api/ml/training/config');
+            if (statusEl) statusEl.textContent = 'Sync training config...';
+
+            try {
+                const response = await fetch(trainingConfigEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        global_enabled: appData.trainingConfig.globalEnabled,
+                        online_learning_enabled: appData.trainingConfig.onlineLearningEnabled,
+                        retrain_between_attempts: appData.trainingConfig.retrainBetweenAttempts,
+                        synthetic_data_enabled: appData.trainingConfig.syntheticDataEnabled,
+                        transfer_learning_enabled: appData.trainingConfig.transferLearningEnabled,
+                        models: appData.trainingConfig.models
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Sync failed: ${response.status}`);
+                }
+
+                const payload = await response.json();
+                if (statusEl) statusEl.textContent = `Synced • active models: ${payload?.enabled_models ?? 0}`;
+                showNotification('✓ Training config tersinkron ke backend.', 'success');
+            } catch (error) {
+                if (statusEl) statusEl.textContent = 'Sync gagal. Config tetap disimpan lokal.';
+                showNotification('Tidak bisa sync training config ke backend.', 'error');
+            }
+        }
+
+        async function runTrainingNow() {
+            collectTrainingConfigFromUI();
+            saveAppData();
+
+            const endpoint = (appData.mlBridge?.endpoint || '').trim();
+            const statusEl = document.getElementById('trainingStatusText');
+            if (!endpoint) {
+                if (statusEl) statusEl.textContent = 'Endpoint inference belum diisi.';
+                showNotification('Isi endpoint inference terlebih dahulu.', 'error');
+                return;
+            }
+
+            const trainEndpoint = endpoint.replace(/\/api\/ml\/inference$/, '/api/ml/training/run');
+            if (statusEl) statusEl.textContent = 'Training in progress...';
+
+            try {
+                const response = await fetch(trainEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model_keys: Object.keys(appData.trainingConfig.models).filter((key) => appData.trainingConfig.models[key]),
+                        retrain_between_attempts: appData.trainingConfig.retrainBetweenAttempts,
+                        online_learning_enabled: appData.trainingConfig.onlineLearningEnabled
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Training failed ${response.status}`);
+                }
+
+                const payload = await response.json();
+                const completed = payload?.completed_models ?? 0;
+                const mode = payload?.mode || 'unknown';
+                if (statusEl) statusEl.textContent = `Training done • completed=${completed} • mode=${mode}`;
+                showNotification('✓ Training pipeline selesai dieksekusi.', 'success');
+            } catch (error) {
+                if (statusEl) statusEl.textContent = 'Training gagal dijalankan.';
+                showNotification('Gagal menjalankan training pipeline.', 'error');
+            }
+        }
+
+        function initTrainingControls() {
+            applyTrainingConfigToUI();
+
+            [
+                'trainingGlobalToggle',
+                'onlineLearningToggle',
+                'retrainBetweenAttemptsToggle',
+                'syntheticDataToggle',
+                'transferLearningToggle'
+            ].forEach((id) => {
+                document.getElementById(id)?.addEventListener('change', () => {
+                    collectTrainingConfigFromUI();
+                    saveAppData();
+                });
+            });
+
+            document.getElementById('syncTrainingConfigBtn')?.addEventListener('click', (event) => {
+                event.preventDefault();
+                syncTrainingConfigToBackend();
+            });
+
+            document.getElementById('runTrainingNowBtn')?.addEventListener('click', (event) => {
+                event.preventDefault();
+                runTrainingNow();
+            });
+        }
+
+        function initMapSettings() {
+            renderMapList();
+            renderActiveMapSelect();
+            bindMLBridgeSettings();
+            initTrainingControls();
+
+            document.getElementById('uploadTrackBtn')?.addEventListener('click', (event) => {
+                event.preventDefault();
+                handleTrackUpload();
+            });
+
+            document.getElementById('setActiveMapBtn')?.addEventListener('click', (event) => {
+                event.preventDefault();
+                setActiveMap();
+            });
+
+            document.getElementById('saveMapSettingsBtn')?.addEventListener('click', (event) => {
+                event.preventDefault();
+                saveAppData();
+                showNotification('✓ Map & ML bridge settings saved!', 'success');
+            });
+        }
+
         // ===== UPDATE TIME =====
         function updateTime() {
             const now = new Date();
@@ -1267,6 +1899,7 @@
         // Initialize
         refreshVehiclesList();
         refreshUsersList();
+        initMapSettings();
         setPageTitle('Admin Settings', userRole);
     </script>
 </body>

@@ -1,5 +1,5 @@
 {
-  "extends": "@apatte/tsconfig/node.json",
+  "extends": "../tsconfig/node.json",
   "compilerOptions": {
     "composite": true,
     "rootDir": "./src",

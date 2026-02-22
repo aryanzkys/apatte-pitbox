@@ -72,12 +72,14 @@
     </style>
 </head>
 
-<body class="bg-background-dark text-white min-h-screen flex flex-col overflow-auto dark">
+<body class="app-page-bg bg-background-dark text-white min-h-screen flex flex-col overflow-auto dark">
     <!-- Header with Navigation -->
     <header class="border-b border-border-dark bg-surface-dark sticky top-0 z-40">
         <div class="flex items-center justify-between px-6 py-4">
             <div class="flex items-center gap-4">
-                <div class="w-10 h-10 bg-gradient-to-br from-accent-hydrogen to-accent-electric rounded-lg flex items-center justify-center font-bold">A</div>
+                <div class="w-10 h-10 rounded-lg overflow-hidden border border-border-dark bg-black/30 p-1">
+                    <img src="./logos/apatte62-logo.png" alt="Apatte 62 Logo" class="w-full h-full object-contain" />
+                </div>
                 <div>
                     <h1 class="text-xl font-bold">Command Center</h1>
                     <p class="text-xs text-white/40">Real-time Vehicle Telemetry</p>
@@ -118,6 +120,10 @@
                 <!-- User Info & Controls -->
                 <div class="flex items-center gap-3">
                     <span id="roleDisplay" class="badge badge-primary text-xs">MANAGER</span>
+                    
+                    <button onclick="displayMode.toggle()" class="p-1.5 hover:bg-surface-dark rounded-lg transition-all" title="Toggle Fullscreen Mode">
+                        <span class="material-symbols-outlined text-xl">fullscreen</span>
+                    </button>
                     
                     <button onclick="handleLogout()" class="p-1.5 hover:bg-surface-dark rounded-lg transition-all">
                         <span class="material-symbols-outlined text-xl">logout</span>
@@ -179,15 +185,15 @@
                     <div class="space-y-2">
                         <div class="bg-accent-hydrogen/10 border border-accent-hydrogen/30 rounded-lg p-3">
                             <div class="text-xs font-bold text-accent-hydrogen mb-1">Energy Predictor</div>
-                            <div class="text-xs text-white/80">45.2 km remaining fuel</div>
+                            <div class="text-xs text-white/80" id="ph2EnergyInsight">45.2 km remaining fuel</div>
                         </div>
                         <div class="bg-accent-shell/10 border border-accent-shell/30 rounded-lg p-3">
                             <div class="text-xs font-bold text-accent-shell mb-1">H2 Purge Schedule</div>
-                            <div class="text-xs text-white/80">Purge in 8 minutes</div>
+                            <div class="text-xs text-white/80" id="ph2PurgeInsight">Purge in 8 minutes</div>
                         </div>
                         <div class="bg-accent-electric/10 border border-accent-electric/30 rounded-lg p-3">
                             <div class="text-xs font-bold text-accent-electric mb-1">Anomaly Detection</div>
-                            <div class="text-xs text-white/80">No anomalies detected</div>
+                            <div class="text-xs text-white/80" id="ph2AnomalyInsight">No anomalies detected</div>
                         </div>
                     </div>
                 </div>
@@ -199,8 +205,9 @@
                 <div class="glass-panel rounded-lg h-64 grid-bg map-gradient flex items-center justify-center overflow-hidden relative">
                     <div class="text-center">
                         <span class="material-symbols-outlined text-6xl text-border-dark/50">location_on</span>
-                        <p class="text-sm text-white/40 mt-2">Brasília Circuit Map</p>
-                        <p class="text-xs text-white/30">Real-time vehicle positions</p>
+                        <p class="text-sm text-white/40 mt-2" id="activeMapName">Brasília Circuit Map</p>
+                        <p class="text-xs text-white/30" id="activeMapMeta">Real-time vehicle positions</p>
+                        <p class="text-[11px] text-accent-electric/90 mt-2 font-mono" id="racingLineAdvice">Racing line stable.</p>
                     </div>
                     
                     <!-- Circuit markers -->
@@ -302,15 +309,15 @@
                     <div class="space-y-2">
                         <div class="bg-accent-electric/10 border border-accent-electric/30 rounded-lg p-3">
                             <div class="text-xs font-bold text-accent-electric mb-1">Energy Predictor</div>
-                            <div class="text-xs text-white/80">38.5 km remaining charge</div>
+                            <div class="text-xs text-white/80" id="ucbeEnergyInsight">38.5 km remaining charge</div>
                         </div>
                         <div class="bg-accent-electric/10 border border-accent-electric/30 rounded-lg p-3">
                             <div class="text-xs font-bold text-accent-electric mb-1">Efficiency Map</div>
-                            <div class="text-xs text-white/80">Maintain current RPM</div>
+                            <div class="text-xs text-white/80" id="ucbeEfficiencyInsight">Maintain current RPM</div>
                         </div>
                         <div class="bg-accent-shell/10 border border-accent-shell/30 rounded-lg p-3">
                             <div class="text-xs font-bold text-accent-shell mb-1">Fatigue Alert</div>
-                            <div class="text-xs text-white/80">Driver alert level: LOW</div>
+                            <div class="text-xs text-white/80" id="ucbeFatigueInsight">Driver alert level: LOW</div>
                         </div>
                     </div>
                 </div>
@@ -323,6 +330,7 @@
     <!-- Scripts -->
     <script src="js/auth.js"></script>
     <script src="js/common.js"></script>
+    <script src="js/ml-bridge.js"></script>
     
     <script>
         // Check authorization and set role display
@@ -332,6 +340,61 @@
         }
         
         document.getElementById('roleDisplay').textContent = userRole.toUpperCase();
+
+        function getAppSettings() {
+            try {
+                return JSON.parse(localStorage.getItem('appSettings') || '{}');
+            } catch {
+                return {};
+            }
+        }
+
+        function applyActiveMap() {
+            const settings = getAppSettings();
+            const maps = Array.isArray(settings.maps) ? settings.maps : [];
+            const activeMap = maps.find(map => map.id === settings.activeMapId) || maps[0];
+
+            const mapName = document.getElementById('activeMapName');
+            const mapMeta = document.getElementById('activeMapMeta');
+
+            if (!activeMap) {
+                if (mapName) mapName.textContent = 'No active track selected';
+                if (mapMeta) mapMeta.textContent = 'Configure in Settings → Track Maps';
+                return;
+            }
+
+            if (mapName) mapName.textContent = `${activeMap.name} Map`;
+            if (mapMeta) {
+                mapMeta.textContent = `${(activeMap.code || '').toUpperCase()} • ${activeMap.fileType || 'layout'} • real-time vehicle positions`;
+            }
+        }
+
+        async function updateMLInsights(ph2Data, ucbeData) {
+            if (!window.MLBridge?.inferOverview) return;
+
+            const inference = await window.MLBridge.inferOverview({
+                telemetry: {
+                    ph2: ph2Data,
+                    ucbe: ucbeData
+                },
+                context: {
+                    page: 'overview',
+                    role: userRole,
+                    ts: Date.now()
+                }
+            });
+
+            const insights = inference?.insights || {};
+            document.getElementById('ph2EnergyInsight').textContent = insights?.ph2?.energy || 'No prediction';
+            document.getElementById('ph2PurgeInsight').textContent = insights?.ph2?.purge || 'No recommendation';
+            document.getElementById('ph2AnomalyInsight').textContent = insights?.ph2?.anomaly || 'No anomalies detected';
+
+            document.getElementById('ucbeEnergyInsight').textContent = insights?.ucbe?.energy || 'No prediction';
+            document.getElementById('ucbeEfficiencyInsight').textContent = insights?.ucbe?.efficiency || 'No recommendation';
+            document.getElementById('ucbeFatigueInsight').textContent = insights?.ucbe?.fatigue || 'No alerts';
+
+            document.getElementById('racingLineAdvice').textContent = insights?.racingLine || 'Racing line stable.';
+        }
         
         // Update telemetry data
         function updateTelemetry() {
@@ -349,6 +412,8 @@
             document.getElementById('ucbeBattery').textContent = (70 + Math.random() * 20).toFixed(0);
             document.getElementById('ucbeTemp').textContent = (50 + Math.random() * 20).toFixed(0);
             document.getElementById('ucbePower').textContent = ucbeData.power;
+
+            updateMLInsights(ph2Data, ucbeData);
         }
         
         updateTelemetry();
@@ -380,6 +445,13 @@
         if (userRole === 'admin') {
             document.getElementById('settingsLink').classList.remove('hidden');
         }
+
+        applyActiveMap();
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'appSettings') {
+                applyActiveMap();
+            }
+        });
         
         setPageTitle('Command Center', userRole);
     </script>

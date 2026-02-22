@@ -78,6 +78,9 @@ export const createHealthServer = (opts: {
   });
 
   server.on("error", err => {
+    if ((err as NodeJS.ErrnoException).code === "EADDRINUSE") {
+      return;
+    }
     logger.log("error", "http_server_error", { error: err.message });
   });
 

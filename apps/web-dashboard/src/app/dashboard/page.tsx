@@ -2,6 +2,8 @@ import Link from "next/link";
 import { requireRole } from "@/lib/auth/require-role";
 import type { AppRole } from "@/lib/auth/roles";
 import { AuthGate } from "@/components/auth/AuthGate";
+import { ActiveMapBadge } from "@/components/ml/ActiveMapBadge";
+import { MLInferenceInsight } from "@/components/ml/MLInferenceInsight";
 import {
   AlertsTicker,
   ComponentRow,
@@ -134,6 +136,7 @@ export default async function DashboardPage() {
             </div>
           </div>
           <div className="flex gap-3">
+            <ActiveMapBadge />
             <SystemStatusBadge />
             <NotificationButton />
             {role === "engineer" ? (
@@ -389,6 +392,7 @@ export default async function DashboardPage() {
               <div className="p-2 bg-background-dark/40 rounded border border-border-dark text-[10px] leading-relaxed">
                 <span className="text-accent-hydrogen font-bold">PH-H2:</span> <MLStrategistText vehicle="phH2" />
               </div>
+              <MLInferenceInsight />
               <button className="w-full py-2 bg-primary text-[10px] font-bold uppercase rounded hover:bg-primary/80 transition-all">
                 Apply Strategy Overrides
               </button>

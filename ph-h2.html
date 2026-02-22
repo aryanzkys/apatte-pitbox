@@ -35,12 +35,14 @@
     <link rel="stylesheet" href="css/common.css">
 </head>
 
-<body class="bg-background-dark text-white min-h-screen flex flex-col dark">
+<body class="app-page-bg bg-background-dark text-white min-h-screen flex flex-col dark">
     <!-- Header with Navigation -->
     <header class="border-b border-border-dark bg-surface-dark sticky top-0 z-40">
         <div class="flex items-center justify-between px-6 py-3">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-gradient-to-br from-accent-hydrogen to-blue-900 rounded-lg flex items-center justify-center font-bold text-lg">H₂</div>
+                <div class="w-10 h-10 rounded-lg overflow-hidden border border-border-dark bg-black/30 p-1">
+                    <img src="./logos/apatte62-logo.png" alt="Apatte 62 Logo" class="w-full h-full object-contain" />
+                </div>
                 <div>
                     <h1 class="text-xl font-bold text-accent-hydrogen">PH-H2 HYDROGEN</h1>
                     <p class="text-xs text-white/40">Fuel Cell Vehicle Telemetry</p>
@@ -64,6 +66,10 @@
                         <div class="w-2 h-2 rounded-full bg-accent-electric animate-pulse"></div>
                         <span class="text-xs font-mono text-accent-electric">LIVE</span>
                     </div>
+                    
+                    <button onclick="displayMode.toggle()" class="p-1.5 hover:bg-surface-dark rounded-lg transition-all" title="Toggle Fullscreen Mode">
+                        <span class="material-symbols-outlined text-xl">fullscreen</span>
+                    </button>
                     
                     <button onclick="handleLogout()" class="p-1.5 hover:bg-surface-dark rounded-lg transition-all">
                         <span class="material-symbols-outlined text-xl">logout</span>
